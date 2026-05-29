@@ -19,6 +19,18 @@ export const createBook = async (req, res) => {
   }
 };
 
+export const fetchAllBooks = async (req, res) => {
+  try {
+    const books = await BooksModel.find();
+    return res
+      .status(200)
+      .json({ message: "Fetch all books successfully", books: books });
+  } catch (err) {
+    console.log("Error", err.message);
+    return res.status(500).json({ error: err.message });
+  }
+};
+
 export const getBooks = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
