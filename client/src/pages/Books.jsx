@@ -228,7 +228,7 @@ const Books = () => {
               }}
             >
               <div className="d-flex flex-wrap gap-4">
-                <Cards />
+                <Cards selectedBooks={book} />
               </div>
             </div>
           </div>

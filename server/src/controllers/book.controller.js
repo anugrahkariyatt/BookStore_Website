@@ -21,7 +21,48 @@ export const createBook = async (req, res) => {
 
 export const fetchAllBooks = async (req, res) => {
   try {
-    const books = await BooksModel.find();
+    const books = await BooksModel.find().populate("category", "name");
+    return res
+      .status(200)
+      .json({ message: "Fetch all books successfully", books: books });
+  } catch (err) {
+    console.log("Error", err.message);
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+export const fetchBookByCategory = async (req, res) => {
+  try {
+    const categoryId = req.params.id;
+    console.log("categroy id", categoryId);
+
+    const books = await BooksModel.find({ category: categoryId });
+    return res
+      .status(200)
+      .json({ message: "Fetch all books successfully", books: books });
+  } catch (err) {
+    console.log("Error", err.message);
+    return res.status(500).json({ error: err.message });
+  }
+};
+export const fetchBookBySold = async (req, res) => {
+  try {
+    // const categoryId = req.params.id;
+
+    const books = await BooksModel.find().sort({ sold: -1 }).limit(10);
+    return res
+      .status(200)
+      .json({ message: "Fetch all books successfully", books: books });
+  } catch (err) {
+    console.log("Error", err.message);
+    return res.status(500).json({ error: err.message });
+  }
+};
+export const fetchBookByNew = async (req, res) => {
+  try {
+    // const categoryId = req.params.id;
+
+    const books = await BooksModel.find().sort({ createdAt: -1 }).limit(10);
     return res
       .status(200)
       .json({ message: "Fetch all books successfully", books: books });
@@ -86,7 +127,7 @@ export const updateBook = async (req, res) => {
         .json({ error: "Book data is required for update" });
     }
     const book = await BooksModel.findByIdAndUpdate(BookId, updatedBook, {
-      new: true,
+      returnDocument: "after",
     });
     return res.status(201).json({
       message: "Update book successfully",

@@ -29,7 +29,22 @@ export const createCategory = async (req, res) => {
 };
 export const getCategories = async (req, res) => {
   try {
-    const categories = await categoriesModel.find({});
+    const categories = await categoriesModel.aggregate([
+      {
+        $lookup: {
+          from: "books",
+          localField: "_id",
+          foreignField: "category",
+          as: "books",
+        },
+      },
+      {
+        $project: {
+          name: 1,
+          bookCount: { $size: "$books" },
+        },
+      },
+    ]);
     return res.status(201).json({
       message: "Fetch  all Categories successfully",
       Categories: categories,
@@ -53,7 +68,7 @@ export const updateCategory = async (req, res) => {
     const updateCategory = await categoriesModel.findOneAndUpdate(
       { name: categoryOldName },
       { name: categoryNewName },
-      { new: true },
+      { returnDocument: "after" },
     );
 
     if (!updateCategory) {
@@ -74,6 +89,7 @@ export const updateCategory = async (req, res) => {
 export const deleteCategory = async (req, res) => {
   try {
     const { name } = req.body;
+
     if (!name) {
       return res.status(400).json({
         error: "Category name is required to deleted",
@@ -94,7 +110,7 @@ export const deleteCategory = async (req, res) => {
       Category: deletedCategory,
     });
   } catch (err) {
-    console.log("Error", err.message);
+    console.log("Error >>>>>>>>>", err.message);
     return res.status(500).json({ error: err.message });
   }
 };

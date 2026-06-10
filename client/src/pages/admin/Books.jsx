@@ -1,0 +1,342 @@
+import { useEffect, useState } from "react";
+import api from "../../api/axios";
+
+const Books = () => {
+  const [books, setBooks] = useState([]);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [selectedBook, setSelectedBook] = useState(null);
+
+  const [form, setForm] = useState({
+    title: "",
+    author: "",
+    price: "",
+    stock: "",
+    category: "",
+    image: "",
+    description: "",
+  });
+
+  const createBook = async () => {
+    try {
+      const res = await api.post("/books/createBook", form);
+
+      setBooks((prev) => [...prev, res.data.Book]);
+      console.log(res.data);
+
+      // close modal
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  const fetchCategories = async () => {
+    try {
+      const res = await api.get("/categories");
+      setCategories(res.data.Categories);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchBooks();
+    fetchCategories();
+  }, []);
+
+  const fetchBooks = async () => {
+    try {
+      const res = await api.get("/books/all");
+      setBooks(res.data.books);
+    } catch (error) {
+      console.error("Error fetching books:", error);
+    }
+  };
+
+  const deleteBook = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this book?")) return;
+
+    try {
+      await api.delete(`/books/${id}`);
+
+      setBooks((prev) => prev.filter((book) => book._id !== id));
+    } catch (error) {
+      console.error("Error deleting book:", error);
+    }
+  };
+
+  const handleEdit = (book) => {
+    setSelectedBook(book);
+
+    setForm({
+      title: book.title || "",
+      author: book.author || "",
+      price: book.price || "",
+      category: book.category?._id || "",
+      image: book.image || "",
+      description: book.description || "",
+    });
+  };
+
+  const updateBook = async () => {
+    try {
+      const res = await api.patch(`/books/${selectedBook._id}`, form);
+
+      setBooks((prev) =>
+        prev.map((book) =>
+          book._id === selectedBook._id ? res.data.Book : book,
+        ),
+      );
+
+      const modalElement = document.getElementById("editBookModal");
+
+      const modal =
+        window.bootstrap.Modal.getInstance(modalElement) ||
+        new window.bootstrap.Modal(modalElement);
+
+      modal.hide();
+
+      setSelectedBook(null);
+    } catch (error) {
+      console.error("Error updating book:", error);
+    }
+  };
+
+  return (
+    <div className="container-fluid">
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h2 className="fw-bold">Books</h2>
+          <p className="text-muted">Manage your bookstore inventory</p>
+        </div>
+        <button
+          className="btn btn-primary"
+          data-bs-toggle="modal"
+          data-bs-target="#editBookModal"
+          onClick={() => {
+            setIsEditMode(false);
+
+            setForm({
+              title: "",
+              author: "",
+              price: "",
+              stock: "",
+              category: "",
+              image: "",
+              description: "",
+            });
+          }}
+        >
+          + Add Book
+        </button>{" "}
+      </div>
+
+      <div className="card shadow-sm border-0">
+        <div className="card-body">
+          <div className="table-responsive">
+            <table className="table table-hover align-middle">
+              <thead className="table-light">
+                <tr>
+                  <th>Image</th>
+                  <th>Title</th>
+                  <th>Author</th>
+                  <th>Category</th>
+                  <th>Price</th>
+                  <th>Stock</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {books.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" className="text-center">
+                      No Books Found
+                    </td>
+                  </tr>
+                ) : (
+                  books.map((item) => (
+                    <tr key={item._id}>
+                      <td>
+                        <img
+                          src={item.image || "https://via.placeholder.com/60"}
+                          alt={item.title}
+                          width="60"
+                          className="rounded"
+                        />
+                      </td>
+
+                      <td>{item.title}</td>
+                      <td>{item.author}</td>
+                      <td>{item.category?.name}</td>
+                      <td>₹{item.price}</td>
+                      <td>{item.stock}</td>
+
+                      <td>
+                        <div className="d-flex gap-2">
+                          <button
+                            type="button"
+                            className="btn btn-light btn-sm"
+                            data-bs-toggle="modal"
+                            data-bs-target="#editBookModal"
+                            onClick={() => {
+                              setIsEditMode(true);
+                              handleEdit(item);
+                            }}
+                          >
+                            <i className="bi bi-pencil-square"></i>{" "}
+                          </button>
+
+                          <button
+                            className="btn btn-light btn-sm"
+                            onClick={() => deleteBook(item._id)}
+                          >
+                            <i class="bi bi-trash3-fill"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Edit Modal */}
+      <div
+        className="modal fade"
+        id="editBookModal"
+        tabIndex="-1"
+        aria-labelledby="editBookModalLabel"
+        aria-hidden="true"
+      >
+        <div className="modal-dialog modal-lg">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title">
+                {isEditMode ? "Edit Book" : "Add Book"}
+              </h5>
+
+              <button
+                type="button"
+                className="btn-close"
+                data-bs-dismiss="modal"
+                onClick={() => setSelectedBook(null)}
+              />
+            </div>
+
+            <div className="modal-body">
+              <div className="d-flex flex-column gap-3">
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Title"
+                  value={form.title}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      title: e.target.value,
+                    })
+                  }
+                />
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Author"
+                  value={form.author}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      author: e.target.value,
+                    })
+                  }
+                />
+
+                <input
+                  type="number"
+                  className="form-control"
+                  placeholder="Stock"
+                  value={form.stock}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      stock: e.target.value,
+                    })
+                  }
+                />
+
+                <input
+                  type="number"
+                  className="form-control"
+                  placeholder="Price"
+                  value={form.price}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      price: e.target.value,
+                    })
+                  }
+                />
+                <select
+                  className="form-select"
+                  value={form.category}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      category: e.target.value,
+                    })
+                  }
+                >
+                  <option value="">Select Category</option>
+
+                  {categories.map((category) => (
+                    <option key={category._id} value={category._id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Image URL"
+                  value={form.image}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      image: e.target.value,
+                    })
+                  }
+                />
+
+                <textarea
+                  rows="4"
+                  className="form-control"
+                  placeholder="Description"
+                  value={form.description}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      description: e.target.value,
+                    })
+                  }
+                />
+
+                <button
+                  className="btn btn-primary"
+                  data-bs-dismiss="modal"
+                  onClick={isEditMode ? updateBook : createBook}
+                >
+                  {isEditMode ? "Update Book" : "Add Book"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Books;

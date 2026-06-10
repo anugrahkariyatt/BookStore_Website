@@ -3,35 +3,40 @@ import HeroBanner from "../components/home/HeroBanner";
 import BookSlider from "../components/home/BookSlider";
 import AuthorsSection from "../components/home/AuthorsSection ";
 import CategorySlider from "../components/home/CategorySlider";
-// import { useState, useEffect } from "react";
-// import api from "../api/axios";
+import { useState, useEffect } from "react";
+import api from "../api/axios";
 
 const Homepage = () => {
-  // const [books, setBooks] = useState([]);
+  const [topSellingBooks, setTopSellingBooks] = useState([]);
+  const [newBooks, setNewBooks] = useState([]);
 
-  // useEffect(() => {
-  //   const fetchBooks = async () => {
-  //     try {
-  //       console.log("Fetching is working");
+  useEffect(() => {
+    const fetchBooks = async () => {
+      try {
+        console.log("Fetching is working");
 
-  //       const res = await api.get("/books/all");
-  //       console.log("Books", res.data);
-  //       setBooks(res.data);
-  //     } catch (err) {
-  //       console.log("error", err.message);
-  //     }
-  //   };
-  //   fetchBooks()
-  // }, []);
+        const sortBySoldBook = await api.get("/books/book-by-sold");
+        const sortByNewBook = await api.get("/books/book-by-new");
+        // console.log("Books sold", sortBySoldBook.data.books);
+        setNewBooks(sortByNewBook.data.books);
+        setTopSellingBooks(sortBySoldBook.data.books);
+        console.log("SE", topSellingBooks);
+      } catch (err) {
+        console.log("error", err.message);
+      }
+    };
+    fetchBooks();
+  }, []);
+
   return (
     <>
       <div className="min-vh-100 d-flex flex-column gap-4 p-3">
         <HeroBanner />
         <div className="w-100 ">
-          <BookSlider />
+          <BookSlider title={"Top Selling"} selectedBooks={topSellingBooks} />
         </div>
         <CategorySlider />
-        <BookSlider />
+        <BookSlider title={"Recent Released Books"} selectedBooks={newBooks} />
 
         <AuthorsSection />
       </div>

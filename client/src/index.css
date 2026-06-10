@@ -35,7 +35,7 @@ body {
   overflow-x: hidden;
   background-color: var(--background-color);
   color: var(--text-primary);
-  font-family: sans-serif;
+  font-family: "Inter", sans-serif;
 }
 
 .main-content-offset {
@@ -104,6 +104,14 @@ body {
 .hero-banner {
   width: 100%;
   border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+.hero-banner picture,
+.hero-banner img {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 /* =========================
@@ -136,15 +144,29 @@ body {
 .Catagory-slider-text li {
   flex-shrink: 0;
 }
+/* ============== 
+        Card 
+ =================*/
 
 /* =========================
    BOOK CARD
 ========================= */
 
+.book-card {
+  width: 180px;
+  min-width: 180px;
+  min-height: 340px;
+
+  border: none;
+  border-radius: 12px;
+  overflow: hidden;
+
+  flex-shrink: 0;
+}
+
 .book-image-wrapper {
   width: 100%;
   padding: 10px;
-
   display: flex;
   justify-content: center;
   align-items: center;
@@ -152,21 +174,19 @@ body {
 
 .book-image {
   width: 100%;
-  max-width: 180px;
-
-  aspect-ratio: 2/3;
+  height: 240px;
   object-fit: cover;
-
   border-radius: 8px;
 }
 
-.book-slider-header {
-  font-size: 1.4rem;
+.card-title {
+  font-size: 1rem;
   font-weight: 600;
 }
 
-.book-slider-text {
-  font-size: 0.9rem;
+.book-slider-container,
+.category-books-slider {
+  scroll-behavior: smooth;
 }
 
 /* =========================
@@ -194,6 +214,38 @@ body {
   display: none;
 }
 
+.status {
+  background: #f1f5f9;
+  color: #475569;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+}
+/* Catagory slider */
+.Catagory-slider-text {
+  scroll-behavior: smooth;
+}
+
+.category-item {
+  cursor: pointer;
+  padding: 10px 16px;
+  border-radius: 30px;
+  white-space: nowrap;
+  opacity: 0.35;
+  transition: all 0.3s ease;
+}
+
+.active-category {
+  opacity: 1;
+  color: #fff;
+  font-weight: 600;
+  transform: scale(1.1);
+}
+
+.category-item:hover {
+  opacity: 0.7;
+}
+
 /* ======================================================
    EXTRA SMALL DEVICES
    <576px
@@ -213,9 +265,6 @@ body {
     font-size: 2rem;
   }
 
-  .book-image {
-    max-width: 130px;
-  }
   .book-slider-header {
     font-size: 1.3rem;
     font-weight: 600;
@@ -231,10 +280,6 @@ body {
 ====================================================== */
 
 @media (min-width: 576px) {
-  .hero-banner {
-    height: 70vh;
-  }
-
   .Catagory-slider-text {
     flex-wrap: nowrap;
 
@@ -244,10 +289,6 @@ body {
     justify-content: start;
 
     text-align: left;
-  }
-
-  .book-image {
-    max-width: 150px;
   }
 }
 
@@ -316,12 +357,9 @@ body {
   }
 
   .hero-banner {
-    height: 50vh;
+    height: 60vh;
   }
 
-  .book-image {
-    max-width: 170px;
-  }
   .navbar-brand {
     font-size: 1.8rem;
     font-weight: 700;
@@ -372,9 +410,6 @@ body {
     text-align: left;
   }
 
-  .book-image {
-    max-width: 180px;
-  }
   .navbar-brand {
     font-size: 2rem;
     font-weight: 700;
@@ -393,7 +428,7 @@ body {
   .books-content {
     margin-left: 0 !important;
   }
-  .filter-container{
+  .filter-container {
     width: 180px;
   }
 }
@@ -409,14 +444,14 @@ body {
   }
 
   .hero-banner {
-    height: 80vh;
+    height: 70vh;
   }
   /* .navbar-brand {
     font-size: 3rem;
     font-weight: 800;
   } */
   .navbar-brand {
-    font-size: 2.5rem;
+    font-size: 2.3rem;
     font-weight: 700;
   }
   .navbar-list {
@@ -437,7 +472,66 @@ body {
   .category-container-div {
     height: 80vh;
   }
-  .filter-container{
+  .filter-container {
     width: 200px;
   }
+}
+/* ==================
+    My Cart 
+============== */
+.cart-item {
+  background: #fff;
+}
+
+.cart-img {
+  width: 80px;
+  height: 100px;
+  object-fit: cover;
+}
+
+.quantity-control {
+  display: inline-flex;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.quantity-control .btn {
+  border: none;
+  border-radius: 0;
+  width: 40px;
+  height: 40px;
+}
+
+.quantity {
+  width: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-left: 1px solid #dee2e6;
+  border-right: 1px solid #dee2e6;
+  font-weight: 600;
+}
+
+/*  */
+
+.wishlist-wrapper {
+  min-height: 100vh;
+  padding: 1.5rem;
+  background-color: #f5f5f5;
+}
+
+.wishlist-content {
+  min-height: 650px;
+  background: #fafafa;
+  border-radius: 12px;
+}
+
+.empty-state {
+  margin-top: 80px;
+}
+
+.empty-state h2 {
+  font-size: 2rem;
+  font-weight: 500;
 }

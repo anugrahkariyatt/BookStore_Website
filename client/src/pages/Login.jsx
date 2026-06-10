@@ -1,7 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { object, string, minLength, email, safeParse, pipe } from "valibot";
-import api from "../api/axios";
+
+import { loginUser } from "../redux/auth/authThunk";
 
 const loginSchema = pipe(
   object({
@@ -14,44 +16,53 @@ const loginSchema = pipe(
 );
 
 const Login = () => {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const { loading, error } = useSelector((state) => state.auth);
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
+
   const [errors, setErrors] = useState({});
+
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [e.target.name]: e.target.value,
-    });
+    }));
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     const result = safeParse(loginSchema, formData);
+
     if (!result.success) {
       const fieldErrors = {};
 
       result.issues.forEach((issue) => {
         const fieldName = issue.path?.[0]?.key;
+
         if (fieldName) {
           fieldErrors[fieldName] = issue.message;
         }
       });
+
       setErrors(fieldErrors);
       return;
     }
-    setErrors({});
-    console.log("VALID DATA:", formData);
-    try {
-      const res = await api.post("/login", formData);
-      console.log("res dara", res.data);
 
+    setErrors({});
+
+    const resultAction = await dispatch(loginUser(formData));
+    console.log(">>>>>>>>>>>> result of  thunk", resultAction);
+    if (loginUser.fulfilled.match(resultAction)) {
       navigate("/home");
-    } catch (err) {
-      console.log("Login failed", err.message);
     }
   };
-  const navigate = useNavigate();
 
   return (
     <div className="vh-100 d-flex justify-content-center align-items-center">
@@ -61,6 +72,8 @@ const Login = () => {
         style={{ width: "400px" }}
       >
         <h2 className="text-center mb-4">Login</h2>
+
+        {error && <div className="alert alert-danger">{error}</div>}
 
         <div className="mb-3">
           <label>Email</label>
@@ -73,6 +86,7 @@ const Login = () => {
             onChange={handleChange}
             name="email"
           />
+
           {errors.email && <div className="text-danger">{errors.email}</div>}
         </div>
 
@@ -87,14 +101,19 @@ const Login = () => {
             onChange={handleChange}
             name="password"
           />
+
           {errors.password && (
             <div className="text-danger">{errors.password}</div>
           )}
         </div>
 
         <div className="d-flex gap-2">
-          <button type="submit" className="btn btn-primary w-100">
-            Login
+          <button
+            type="submit"
+            className="btn btn-primary w-100"
+            disabled={loading}
+          >
+            {loading ? "Logging in..." : "Login"}
           </button>
 
           <button
