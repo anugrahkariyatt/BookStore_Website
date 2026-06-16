@@ -10,7 +10,34 @@ export const loginUser = createAsyncThunk(
       return res.data;
     } catch (error) {
       return thunkAPI.rejectWithValue(
-        error.response?.data?.message || "Login Failed"
+        error.response?.data?.message || "Login Failed",
+      );
+    }
+  },
+);
+export const logoutUser = createAsyncThunk(
+  "auth/logout",
+  async (__, thunkAPI) => {
+    try {
+      await api.post("/logout");
+      return true;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.error || "Logout failed",
+      );
+    }
+  },
+);
+
+export const checkAuth = createAsyncThunk(
+  "auth/checkAuth",
+  async (_, thunkAPI) => {
+    try {
+      const res = await api.get("/profile");
+      return res.data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Unauthorized"
       );
     }
   }

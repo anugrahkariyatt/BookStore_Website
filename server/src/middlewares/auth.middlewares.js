@@ -1,14 +1,12 @@
 import jwt from "jsonwebtoken";
 
 export const verifyToken = (req, res, next) => {
-  const authHeader = req.header("Authorization");
-  const token = authHeader && authHeader.split(" ")[1];
-
+  const token = req.cookies.authToken; // instead of Authorization header
   if (!token) {
-    return res.status(401).json({
-      error: "Access Denied",
-    });
+    return res.status(401).json({ error: "Access Denied" });
   }
+
+ 
 
   try {
     const secretKey = process.env.JWT_SECRET;

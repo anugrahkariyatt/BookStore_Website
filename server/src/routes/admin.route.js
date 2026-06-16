@@ -3,8 +3,11 @@ import { verifyToken } from "../middlewares/auth.middlewares.js";
 import { verifyAdmin } from "../middlewares/admin.middlewares.js";
 import {
   blockUser,
+  fetchAllOrders,
   fetchAllUsers,
+  getDashboardStats,
   unBlockUser,
+  updateOrderStatus,
 } from "../controllers/admin.controller.js";
 
 const router = express.Router();
@@ -12,8 +15,11 @@ const router = express.Router();
 router.get("/", verifyToken, verifyAdmin, (req, res) => {
   res.send({ title: "Admin page" });
 });
-router.get("/users", fetchAllUsers);
-router.patch("/block/:id", blockUser);
-router.patch("/unblock/:id", unBlockUser);
+router.get("/users", verifyToken, verifyAdmin, fetchAllUsers);
+router.patch("/block/:id", verifyToken, verifyAdmin, blockUser);
+router.patch("/unblock/:id", verifyToken, verifyAdmin, unBlockUser);
+router.get("/dashboard", verifyToken, verifyAdmin, getDashboardStats);
+router.get("/orders", verifyToken, verifyAdmin, fetchAllOrders);
+router.patch("/orders/:id", verifyToken, verifyAdmin, updateOrderStatus);
 
 export default router;

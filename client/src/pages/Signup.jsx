@@ -79,7 +79,7 @@ const Signup = () => {
     // console.log("VALID DATA:", formData);
     try {
       await api.post("/signup", formData);
-      navigate('/home')
+      navigate("/home");
     } catch (err) {
       console.log("Signup failed", err.message);
     }

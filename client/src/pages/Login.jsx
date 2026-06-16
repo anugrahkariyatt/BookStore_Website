@@ -58,9 +58,13 @@ const Login = () => {
     setErrors({});
 
     const resultAction = await dispatch(loginUser(formData));
-    console.log(">>>>>>>>>>>> result of  thunk", resultAction);
+
     if (loginUser.fulfilled.match(resultAction)) {
-      navigate("/home");
+      if (resultAction.payload.user.role === "user") {
+        navigate("/home");
+      } else {
+        navigate("/dashboard");
+      }
     }
   };
 

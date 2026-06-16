@@ -1,7 +1,19 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { logout } from "../../redux/auth/authSlice";
+import { logoutUser } from "../../redux/auth/authThunk";
+import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
 
 const SideBar = ({ SideBarOpen, closeSidebar }) => {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const handleLogout = async () => {
+    await dispatch(logoutUser()).unwrap();
+    dispatch(logout());
+    navigate("/");
+  };
   return (
     <>
       {/* Desktop Sidebar */}
@@ -12,7 +24,10 @@ const SideBar = ({ SideBarOpen, closeSidebar }) => {
           minHeight: "100vh",
         }}
       >
-        <SidebarContent />
+        <SidebarContent
+          closeSidebar={closeSidebar}
+          handleLogout={handleLogout}
+        />
       </aside>
 
       {/* Mobile Sidebar */}
@@ -25,9 +40,7 @@ const SideBar = ({ SideBarOpen, closeSidebar }) => {
           top: 0,
           left: 0,
           zIndex: 1050,
-          transform: SideBarOpen
-            ? "translateX(0)"
-            : "translateX(-100%)",
+          transform: SideBarOpen ? "translateX(0)" : "translateX(-100%)",
           transition: "transform 0.3s ease",
         }}
       >
@@ -37,10 +50,9 @@ const SideBar = ({ SideBarOpen, closeSidebar }) => {
   );
 };
 
-const SidebarContent = ({ closeSidebar }) => {
+const SidebarContent = ({ closeSidebar, handleLogout }) => {
   return (
     <div className="d-flex flex-column h-100">
-
       {/* Logo */}
       <div className="p-3 border-bottom d-flex justify-content-between align-items-center">
         <div>
@@ -58,14 +70,13 @@ const SidebarContent = ({ closeSidebar }) => {
 
       {/* Menu */}
       <ul className="list-unstyled mt-3">
-
         <li>
           <Link
             className="text-decoration-none text-white d-block p-3"
             to="/dashboard"
             onClick={closeSidebar}
           >
-          Dashboard
+            Dashboard
           </Link>
         </li>
 
@@ -115,17 +126,15 @@ const SidebarContent = ({ closeSidebar }) => {
             to="/adminprofile"
             onClick={closeSidebar}
           >
-             Profile
+            Profile
           </Link>
         </li>
-
       </ul>
 
       {/* Logout */}
       <div className="mt-auto border-top p-3">
-         Logout
+        <button onClick={() => handleLogout()}>Logout</button>
       </div>
-
     </div>
   );
 };

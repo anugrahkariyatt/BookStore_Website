@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import api from "../../api/axios";
+import { errorToast, successToast } from "../../utils/Toast";
 
 const Categories = () => {
   const [categories, setCategories] = useState([]);
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedCat, setSelectedCate] = useState(null);
 
   const [form, setForm] = useState({
     name: "",
@@ -31,6 +33,11 @@ const Categories = () => {
         ...prev,
         res.data.category || res.data.Category,
       ]);
+      if (res) {
+        successToast("Successfully create the Category");
+      } else {
+        errorToast("Unable to create the Category");
+      }
 
       setForm({ name: "" });
     } catch (error) {
@@ -59,6 +66,11 @@ const Categories = () => {
           cat._id === selectedCategory._id ? res.data.Category : cat,
         ),
       );
+      if (res) {
+        successToast("Successfully update the Category");
+      } else {
+        errorToast("Unable to update the Category");
+      }
 
       setSelectedCategory(null);
     } catch (error) {
@@ -69,12 +81,17 @@ const Categories = () => {
     if (!window.confirm("Are you sure?")) return;
 
     try {
-      await api.delete("/categories", {
+      const res = await api.delete("/categories", {
         data: {
           name: name,
         },
       });
       setCategories((prev) => prev.filter((cat) => cat._id !== id));
+      if (res) {
+        successToast("Successfully delete the Category");
+      } else {
+        errorToast("Unable to delete the Category");
+      }
     } catch (error) {
       console.error("Error deleting category:", error);
     }
@@ -143,7 +160,9 @@ const Categories = () => {
 
                         <button
                           className="btn btn-sm btn-light"
-                          onClick={() => deleteCategory(item._id, item.name)}
+                          data-bs-toggle="modal"
+                          data-bs-target="#deleteModal"
+                          onClick={() => setSelectedCate(item)}
                         >
                           <i className="bi bi-trash3-fill"></i>{" "}
                         </button>
@@ -206,6 +225,59 @@ const Categories = () => {
                 onClick={isEditMode ? updateCategory : createCategory}
               >
                 {isEditMode ? "Update Category" : "Add Category"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        className="modal fade"
+        id="deleteModal"
+        tabIndex="-1"
+        aria-labelledby="deleteModalLabel"
+        aria-hidden="true"
+      >
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title" id="deleteModalLabel">
+                Confirm Delete
+              </h5>
+
+              <button
+                type="button"
+                className="btn-close"
+                data-bs-dismiss="modal"
+              ></button>
+            </div>
+
+            <div className="modal-body">
+              Are you sure you want to delete this book?
+              <br />
+              <strong>{selectedCat?.name}</strong>
+              <br />
+              This action cannot be undone.
+            </div>
+
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                data-bs-dismiss="modal"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={() =>
+                  deleteCategory(selectedCat?._id, selectedCat?.name)
+                }
+                data-bs-dismiss="modal"
+              >
+                Delete
               </button>
             </div>
           </div>

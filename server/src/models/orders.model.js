@@ -1,10 +1,48 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose from "mongoose";
 
 const orderSchema = new mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
+      required: true,
+    },
+
+    shippingAddress: {
+      name: {
+        type: String,
+        required: true,
+      },
+
+      phone: {
+        type: String,
+        required: true,
+      },
+
+      addressLine1: {
+        type: String,
+        required: true,
+      },
+
+      city: {
+        type: String,
+        required: true,
+      },
+
+      state: {
+        type: String,
+        required: true,
+      },
+
+      pincode: {
+        type: String,
+        required: true,
+      },
+    },
+
+    paymentMethod: {
+      type: String,
+      default: "COD",
     },
 
     items: [
@@ -14,13 +52,20 @@ const orderSchema = new mongoose.Schema(
           ref: "Book",
         },
 
+        title: String,
+
+        image: String,
+
         quantity: Number,
 
         price: Number,
       },
     ],
 
-    totalPrice: Number,
+    totalPrice: {
+      type: Number,
+      required: true,
+    },
 
     status: {
       type: String,
@@ -32,4 +77,5 @@ const orderSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
+
 export default mongoose.model("Orders", orderSchema);

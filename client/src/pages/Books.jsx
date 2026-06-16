@@ -1,10 +1,71 @@
 import { useEffect, useState } from "react";
 import api from "../api/axios";
 import Cards from "../components/ui/Cards";
-
+import { useSearchParams } from "react-router-dom";
 const Books = () => {
   const [book, setBook] = useState(null);
+  const [authors, setAuthors] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [searchParams] = useSearchParams();
 
+  const search = searchParams.get("search") || "";
+  console.log("Search", search);
+
+  const [filters, setFilters] = useState({
+    categories: [],
+    authors: [],
+    minPrice: "",
+    maxPrice: "",
+    sort: "",
+  });
+  const fetchCategoryandAuthor = async () => {
+    const res = await api.get("/categories");
+    setCategories(res.data.Categories);
+    const author = await api.get("/books/authors");
+    setAuthors(author.data.authors);
+    console.log("Category data>>>>>>>>>>>", categories);
+    console.log("author data>>>>>>>>>>>>>>>>>>", author.data.authors);
+  };
+
+  const fetchBooks = async () => {
+    const res = await api.get("/books/filter", {
+      params: {
+        categories: filters.categories.join(","),
+        authors: filters.authors.join(","),
+        minPrice: filters.minPrice,
+        maxPrice: filters.maxPrice,
+        search,
+        sort: filters.sort,
+      },
+    });
+
+    setBook(res.data.books);
+    console.log(res.data.books);
+  };
+
+  const handleCategoryChange = (category) => {
+    setFilters((prev) => ({
+      ...prev,
+      categories: prev.categories.includes(category)
+        ? prev.categories.filter((c) => c !== category)
+        : [...prev.categories, category],
+    }));
+  };
+  const handleAuthorChange = (author) => {
+    setFilters((prev) => ({
+      ...prev,
+      authors: prev.authors.includes(author)
+        ? prev.authors.filter((c) => c !== author)
+        : [...prev.authors, author],
+    }));
+  };
+  const handlePriceChange = (min, max) => {
+    setFilters((prev) => ({
+      ...prev,
+      minPrice: min,
+      maxPrice: max,
+    }));
+  };
   useEffect(() => {
     const fetchBook = async () => {
       const res = await api.get(`/books/all`);
@@ -12,211 +73,201 @@ const Books = () => {
     };
 
     fetchBook();
-  }, []);
+    fetchCategoryandAuthor();
+  }, [filters]);
+
+  useEffect(() => {
+    fetchBooks();
+  }, [filters.sort]);
+
+  useEffect(() => {
+    fetchBooks();
+  }, [search]);
 
   if (!book) return <div>Loading...</div>;
 
   return (
     //div container
-    <div className="px-5 py-4 bg-light">
-      {/* category container */}
-      <div className="rounded-4 py-5 px-4 bg-warning">
-        <h1 className="text-center fw-bold display-3 mb-5">
-          Crime Mystery Thriller
-        </h1>
-
-        <div className="d-flex flex-wrap justify-content-center gap-3">
-          <button className="btn btn-outline-dark rounded-pill px-4">
-            Crime Mystery Thriller
-          </button>
-
-          <button className="btn btn-outline-dark rounded-pill px-4">
-            Young Adult Gen Fiction
-          </button>
-
-          <button className="btn btn-outline-dark rounded-pill px-4">
-            Young Adult Crime Mystery Thriller
-          </button>
-
-          <button className="btn btn-outline-dark rounded-pill px-4">
-            Young Adult Fantasy
-          </button>
-
-          <button className="btn btn-outline-dark rounded-pill px-4">
-            Young Adult Romance
-          </button>
-
-          <button className="btn btn-outline-dark rounded-pill px-4">
-            General And Literary Fiction
-          </button>
-
-          <button className="btn btn-outline-dark rounded-pill px-4">
-            True Crime
-          </button>
-
-          <button className="btn btn-outline-dark rounded-pill px-4">
-            Sci-Fi And Fantasy
-          </button>
-
-          <button className="btn btn-outline-dark rounded-pill px-4">
-            Comics
-          </button>
-
-          <button className="btn btn-outline-dark rounded-pill px-4">
-            General & Encyclopedia
-          </button>
-        </div>
-      </div>
-
+    <div className="px-2 py-4 bg-light vh-100">
       {/* left side filter */}
-      <div className="d-flex  gap-4 mt-4 align-items-start p-2">
+      <div className="d-lg-none mb-3">
+        <button
+          className="btn btn-dark w-100"
+          data-bs-toggle="offcanvas"
+          data-bs-target="#mobileFilter"
+        >
+          Filters
+        </button>
+      </div>
+      <div className="d-flex gap-4 flex-grow-1 align-items-start">
         {" "}
-        <div className="d-none d-lg-flex flex-lg-column">
+        <div
+          className="d-none d-lg-flex flex-lg-column"
+          style={{ width: "220px", minWidth: "220px" }}
+        >
           <h3 className="fw-bold mb-4">Filter</h3>
-          <hr />
-          {/* filter */}
-          <div className=" filter-container  flex-shrink-0">
-            {" "}
-            <h4 className="fw-bold mb-3">Category</h4>
-            <div className="d-flex flex-column gap-2">
-              <div className="form-check">
-                <input
-                  className="form-check-input"
-                  type="checkbox"
-                  id="fiction"
-                />
-                <label className="form-check-label" htmlFor="fiction">
-                  Fiction
-                </label>
-              </div>
-
-              <div className="form-check">
-                <input
-                  className="form-check-input"
-                  type="checkbox"
-                  id="mystery"
-                />
-                <label className="form-check-label" htmlFor="mystery">
-                  Mystery
-                </label>
-              </div>
-
-              <div className="form-check">
-                <input
-                  className="form-check-input"
-                  type="checkbox"
-                  id="thriller"
-                />
-                <label className="form-check-label" htmlFor="thriller">
-                  Thriller
-                </label>
-              </div>
-
-              <div className="form-check">
-                <input
-                  className="form-check-input"
-                  type="checkbox"
-                  id="fantasy"
-                />
-                <label className="form-check-label" htmlFor="fantasy">
-                  Fantasy
-                </label>
+          <button className="btn btn-dark" onClick={fetchBooks}>
+            Apply Filters
+          </button>
+          <div className="accordion-item bg-transparent border-bottom border-top-0 border-start-0 border-end-0 py-2">
+            <h2 className="accordion-header" id="headingCategory">
+              <button
+                className="accordion-button bg-transparent fw-bold fs-5 p-0 shadow-none"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#collapseCategory"
+                aria-expanded="true"
+                aria-controls="collapseCategory"
+              >
+                Category
+              </button>
+            </h2>
+            <div
+              id="collapseCategory"
+              className="accordion-collapse collapse show"
+              aria-labelledby="headingCategory"
+              data-bs-parent="#filterSidebar"
+            >
+              <div
+                className="accordion-body px-0 pt-3 pb-2 overflow-y-auto"
+                style={{ maxHeight: "200px" }}
+              >
+                {categories.map((item) => (
+                  <div className="form-check mb-2" key={item._id}>
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      id={`category-${item._id}`}
+                      onChange={() => handleCategoryChange(item._id)}
+                    />
+                    <label
+                      className="form-check-label text-muted"
+                      htmlFor={`category-${item._id}`}
+                    >
+                      {item.name}
+                    </label>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
-          <hr />
-          {/* Author */}
-          <div className="mb-4">
-            <h4 className="fw-bold mb-3">Author</h4>
 
-            <div className="d-flex flex-column gap-2">
-              <div className="form-check">
-                <input
-                  className="form-check-input"
-                  type="checkbox"
-                  id="author1"
-                />
-                <label className="form-check-label" htmlFor="author1">
-                  Agatha Christie
-                </label>
-              </div>
-
-              <div className="form-check">
-                <input
-                  className="form-check-input"
-                  type="checkbox"
-                  id="author2"
-                />
-                <label className="form-check-label" htmlFor="author2">
-                  Stephen King
-                </label>
-              </div>
-
-              <div className="form-check">
-                <input
-                  className="form-check-input"
-                  type="checkbox"
-                  id="author3"
-                />
-                <label className="form-check-label" htmlFor="author3">
-                  Dan Brown
-                </label>
-              </div>
-            </div>
-          </div>
-          <hr />
-          {/* Price */}
-          <div className="mb-4">
-            <h4 className="fw-bold mb-3">Price</h4>
-
-            <div className="d-flex flex-column gap-2">
-              <div className="form-check">
-                <input
-                  className="form-check-input"
-                  type="checkbox"
-                  id="price1"
-                />
-                <label className="form-check-label" htmlFor="price1">
-                  Under ₹200
-                </label>
-              </div>
-
-              <div className="form-check">
-                <input
-                  className="form-check-input"
-                  type="checkbox"
-                  id="price2"
-                />
-                <label className="form-check-label" htmlFor="price2">
-                  ₹200 - ₹500
-                </label>
-              </div>
-
-              <div className="form-check">
-                <input
-                  className="form-check-input"
-                  type="checkbox"
-                  id="price3"
-                />
-                <label className="form-check-label" htmlFor="price3">
-                  Above ₹500
-                </label>
+          <div className="accordion-item bg-transparent border-bottom border-top-0 border-start-0 border-end-0 py-2">
+            <h2 className="accordion-header" id="headingAuthor">
+              <button
+                className="accordion-button collapsed bg-transparent fw-bold fs-5 p-0 shadow-none"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#collapseAuthor"
+                aria-expanded="false"
+                aria-controls="collapseAuthor"
+              >
+                Author
+              </button>
+            </h2>
+            <div
+              id="collapseAuthor"
+              className="accordion-collapse collapse"
+              aria-labelledby="headingAuthor"
+              data-bs-parent="#filterSidebar"
+            >
+              <div
+                className="accordion-body px-0 pt-3 pb-2 overflow-y-auto"
+                style={{ maxHeight: "200px" }}
+              >
+                {authors?.map((author, index) => (
+                  <div className="form-check mb-2" key={index}>
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      id={`author-${index}`}
+                      onChange={() => handleAuthorChange(author)}
+                    />
+                    <label
+                      className="form-check-label text-muted"
+                      htmlFor={`author-${index}`}
+                    >
+                      {author}
+                    </label>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
+
+          {/* <div className="accordion-item bg-transparent border-0 py-2">
+            <h2 className="accordion-header" id="headingPrice">
+              <button
+                className="accordion-button collapsed bg-transparent fw-bold fs-5  p-0 shadow-none"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#collapsePrice"
+                aria-expanded="false"
+                aria-controls="collapsePrice"
+              >
+                Price
+              </button>
+            </h2>
+            <div
+              id="collapsePrice"
+              className="accordion-collapse collapse"
+              aria-labelledby="headingPrice"
+              data-bs-parent="#filterSidebar"
+            >
+              <div className="form-check mb-2">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  id="agatha"
+                  onChange={() => handlePriceChange(0, 599)}
+                />
+                <label className="form-check-label text-muted" htmlFor="agatha">
+                  Below 199
+                </label>
+              </div>
+              <div className="form-check mb-2">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  id="stephen"
+                />
+                <label
+                  className="form-check-label text-muted"
+                  htmlFor="stephen"
+                >
+                  200 - 399
+                </label>
+              </div>
+              <div className="form-check mb-0">
+                <input className="form-check-input" type="checkbox" id="dan" />
+                <label className="form-check-label text-muted" htmlFor="dan">
+                  400 - 599
+                </label>
+              </div>
+            </div>
+          </div> */}
         </div>
-        {/* books container */}
         <div className="d-flex gap-4  flex-flex-grow-1   align-items-start ">
-          {/* Books Content */}
           <div className="flex-grow-1">
-            {/* Fixed Header */}
             <div className="d-none d-lg-flex justify-content-between align-items-center mb-4">
               <button className="btn btn-light px-4 py-2">Books</button>
 
-              <select className="form-select" style={{ width: "250px" }}>
-                <option>Relevance</option>
-                <option>Price Low To High</option>
-                <option>Price High To Low</option>
+              <select
+                className="form-select"
+                style={{ width: "250px" }}
+                value={filters.sort}
+                onChange={(e) => {
+                  setFilters((prev) => ({
+                    ...prev,
+                    sort: e.target.value,
+                  }));
+                }}
+              >
+                <option value="">Relevance</option>
+                <option value="price_asc">Price Low To High</option>
+                <option value="price_desc">Price High To Low</option>
+                <option value="newest">Newest</option>
+                <option value="bestselling">Best Selling</option>
               </select>
             </div>
 
@@ -232,6 +283,61 @@ const Books = () => {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+      <div
+        className="offcanvas offcanvas-start"
+        tabIndex="-1"
+        id="mobileFilter"
+      >
+        <div className="offcanvas-header">
+          <h5>Filters</h5>
+
+          <button
+            type="button"
+            className="btn-close"
+            data-bs-dismiss="offcanvas"
+          ></button>
+        </div>
+
+        <div className="offcanvas-body">
+          <button
+            className="btn btn-dark w-100 mb-3"
+            onClick={fetchBooks}
+            data-bs-dismiss="offcanvas"
+          >
+            Apply Filters
+          </button>
+
+          <h6>Categories</h6>
+
+          {categories.map((item) => (
+            <div className="form-check mb-2" key={item._id}>
+              <input
+                className="form-check-input"
+                type="checkbox"
+                onChange={() => handleCategoryChange(item._id)}
+              />
+
+              <label className="form-check-label">{item.name}</label>
+            </div>
+          ))}
+
+          <hr />
+
+          <h6>Authors</h6>
+
+          {authors?.map((author, index) => (
+            <div className="form-check mb-2" key={index}>
+              <input
+                className="form-check-input"
+                type="checkbox"
+                onChange={() => handleAuthorChange(author)}
+              />
+
+              <label className="form-check-label">{author}</label>
+            </div>
+          ))}
         </div>
       </div>
     </div>

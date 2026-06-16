@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../../api/axios";
+import { errorToast, successToast } from "../../utils/Toast";
 
 const Books = () => {
   const [books, setBooks] = useState([]);
@@ -13,15 +14,33 @@ const Books = () => {
     price: "",
     stock: "",
     category: "",
-    image: "",
+    coverImage: "null",
     description: "",
   });
 
   const createBook = async () => {
     try {
-      const res = await api.post("/books/createBook", form);
+      const formData = new FormData();
+
+      formData.append("title", form.title);
+      formData.append("author", form.author);
+      formData.append("price", form.price);
+      formData.append("stock", form.stock);
+      formData.append("category", form.category);
+      formData.append("description", form.description);
+
+      if (form.coverImage) {
+        formData.append("coverImage", form.coverImage);
+      }
+
+      const res = await api.post("/books/createBook", formData);
 
       setBooks((prev) => [...prev, res.data.Book]);
+      if (res) {
+        successToast("Successfully Added Book");
+      } else {
+        errorToast("Failed to add book");
+      }
       console.log(res.data);
 
       // close modal
@@ -53,12 +72,15 @@ const Books = () => {
   };
 
   const deleteBook = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this book?")) return;
-
     try {
-      await api.delete(`/books/${id}`);
+      const res = await api.delete(`/books/${id}`);
 
       setBooks((prev) => prev.filter((book) => book._id !== id));
+      if (res) {
+        successToast("Successfully Delete Book");
+      } else {
+        errorToast("Unable to delete book");
+      }
     } catch (error) {
       console.error("Error deleting book:", error);
     }
@@ -71,6 +93,7 @@ const Books = () => {
       title: book.title || "",
       author: book.author || "",
       price: book.price || "",
+      stock: book.stock || "",
       category: book.category?._id || "",
       image: book.image || "",
       description: book.description || "",
@@ -79,14 +102,31 @@ const Books = () => {
 
   const updateBook = async () => {
     try {
-      const res = await api.patch(`/books/${selectedBook._id}`, form);
+      const formData = new FormData();
+
+      formData.append("title", form.title);
+      formData.append("author", form.author);
+      formData.append("price", form.price);
+      formData.append("stock", form.stock);
+      formData.append("category", form.category);
+      formData.append("description", form.description);
+
+      if (form.coverImage) {
+        formData.append("coverImage", form.coverImage);
+      }
+      const res = await api.patch(`/books/${selectedBook._id}`, formData);
+      console.log("Res", res.data);
 
       setBooks((prev) =>
         prev.map((book) =>
           book._id === selectedBook._id ? res.data.Book : book,
         ),
       );
-
+      if (res) {
+        successToast("Successfully update the Book");
+      } else {
+        errorToast("Unable to update the book");
+      }
       const modalElement = document.getElementById("editBookModal");
 
       const modal =
@@ -188,9 +228,12 @@ const Books = () => {
 
                           <button
                             className="btn btn-light btn-sm"
-                            onClick={() => deleteBook(item._id)}
+                            data-bs-toggle="modal"
+                            data-bs-target="#deleteModal"
+                            data-bs-dismiss="modal"
+                            onClick={() => setSelectedBook(item)}
                           >
-                            <i class="bi bi-trash3-fill"></i>
+                            <i className="bi bi-trash3-fill"></i>
                           </button>
                         </div>
                       </td>
@@ -203,7 +246,7 @@ const Books = () => {
         </div>
       </div>
 
-      {/* Edit Modal */}
+      {/*  Modal */}
       <div
         className="modal fade"
         id="editBookModal"
@@ -298,14 +341,13 @@ const Books = () => {
                 </select>
 
                 <input
-                  type="text"
+                  type="file"
                   className="form-control"
-                  placeholder="Image URL"
-                  value={form.image}
+                  accept="image/*"
                   onChange={(e) =>
                     setForm({
                       ...form,
-                      image: e.target.value,
+                      coverImage: e.target.files[0],
                     })
                   }
                 />
@@ -331,6 +373,57 @@ const Books = () => {
                   {isEditMode ? "Update Book" : "Add Book"}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        className="modal fade"
+        id="deleteModal"
+        tabIndex="-1"
+        aria-labelledby="deleteModalLabel"
+        aria-hidden="true"
+      >
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title" id="deleteModalLabel">
+                Confirm Delete
+              </h5>
+
+              <button
+                type="button"
+                className="btn-close"
+                data-bs-dismiss="modal"
+              ></button>
+            </div>
+
+            <div className="modal-body">
+              Are you sure you want to delete this book?
+              <br />
+              <strong>{selectedBook?.title}</strong>
+              <br />
+              This action cannot be undone.
+            </div>
+
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                data-bs-dismiss="modal"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={() => deleteBook(selectedBook._id)}
+                data-bs-dismiss="modal"
+              >
+                Delete
+              </button>
             </div>
           </div>
         </div>

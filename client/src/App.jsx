@@ -15,8 +15,22 @@ import AdminOrders from "./pages/admin/Orders";
 import AdminProfile from "./pages/admin/Profile";
 import Users from "./pages/admin/Users";
 import AdminLayout from "./layouts/AdminLayout";
+import Orders from "./pages/Orders";
+import OrderDetails from "./pages/OrderDetails";
+import Checkout from "./pages/CheckOut";
+import Profile from "./components/ui/Profile";
+
+import { useDispatch } from "react-redux";
+import { checkAuth } from "./redux/auth/authThunk";
+import { useEffect } from "react";
 
 function App() {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(checkAuth());
+  }, [dispatch]);
+
   return (
     <>
       <Routes>
@@ -27,6 +41,7 @@ function App() {
           <Route path="/adminbook" element={<AdminBooks />} />
           <Route path="/admincategories" element={<AdminCategories />} />
           <Route path="/adminorders" element={<AdminOrders />} />
+          <Route path="/adminorders/:id" element={<OrderDetails />} />
           <Route path="/adminprofile" element={<AdminProfile />} />
           <Route path="/users" element={<Users />} />
         </Route>
@@ -35,6 +50,11 @@ function App() {
           <Route path="/product/:id" element={<Book />} />
           <Route path="/books" element={<Books />} />
           <Route path="/about" element={<About />} />
+          <Route path="/orders" element={<Orders />} />
+          <Route path="/orders/:id" element={<OrderDetails />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/checkout" element={<Checkout />} />
+
           <Route path="/contact" element={<Contact />} />
         </Route>
       </Routes>

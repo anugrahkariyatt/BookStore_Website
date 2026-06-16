@@ -8,7 +8,6 @@ const BookSlider = ({ selectedBooks, title }) => {
           <h4 className="book-slider-header">{title}</h4>
           <p className="book-slider-text">Read What Millions Have Loved!</p>
         </div>
-        <button className="btn btn-dark">Show All</button>
       </div>
       <div className="book-slider-container no-scrollbar d-flex gap-3 overflow-auto pb-3">
         <Cards selectedBooks={selectedBooks} />

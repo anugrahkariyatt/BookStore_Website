@@ -61,12 +61,49 @@ export const login = async (req, res) => {
 
     const token = await generateToken(user);
 
-    return res.status(200).json({ token: token });
+    res.cookie("authToken", token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return res.status(200).json({ user: user });
   } catch (err) {
     console.error("Login error:", err);
 
     return res.status(500).json({
       error: err.message || "Login failed",
+    });
+  }
+};
+
+export const logout = async (req, res) => {
+  res.clearCookie("authToken");
+
+  res.status(200).json({
+    message: "Logged out successfully",
+  });
+};
+
+export const getProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        error: "User not found",
+      });
+    }
+
+    res.status(200).json({
+      user,
+    });
+  } catch (error) {
+    console.log("Error", error.message);
+
+    res.status(500).json({
+      error: error.message,
     });
   }
 };

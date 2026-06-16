@@ -1,4 +1,6 @@
+import booksModel from "../models/books.model.js";
 import userModel from "../models/user.model.js";
+import ordersModel from "../models/orders.model.js";
 
 export const fetchAllUsers = async (req, res) => {
   try {
@@ -65,5 +67,74 @@ export const unBlockUser = async (req, res) => {
     res.status(500).json({
       message: err.message,
     });
+  }
+};
+
+export const getDashboardStats = async (req, res) => {
+  try {
+    const revenue = await ordersModel.aggregate([
+      {
+        $match: {
+          status: "Delivered",
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalRevenue: {
+            $sum: "$totalPrice",
+          },
+        },
+      },
+    ]);
+    const recentOrder = await ordersModel
+      .find()
+      .populate("userId", "name email")
+      .sort({ createdAt: -1 })
+      .limit(10);
+    const totalBooks = await booksModel.countDocuments({});
+    const totalOrders = await ordersModel.countDocuments({});
+    const totalUsers = await userModel.countDocuments({});
+
+    res.status(200).json({
+      totalRevenue: revenue[0]?.totalRevenue || 0,
+      totalBooks: totalBooks,
+      totalUsers: totalUsers,
+      totalOrders: totalOrders,
+      recentOrder: recentOrder,
+    });
+  } catch (err) {
+    res.status(500).json({
+      error: err.message,
+    });
+  }
+};
+
+export const fetchAllOrders = async (req, res) => {
+  try {
+    const orders = await ordersModel.find().populate("userId", "name email");
+    res.status(200).json({
+      orders: orders,
+    });
+  } catch (err) {
+    console.log("Error", err.message);
+    return res.status(500).json({ Error: err.message });
+  }
+};
+
+export const updateOrderStatus = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const { status } = req.body;
+    console.log("Id?>>>", id);
+    console.log("Id?>>>", status);
+    const updateOrder = await ordersModel.findByIdAndUpdate(
+      id,
+      { status: status },
+      { new: true },
+    );
+  } catch (err) {
+    console.log("Error", err.message);
+    res.status(500).json({ Error: err.message });
   }
 };

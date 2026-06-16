@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import api from "../../api/axios";
+import { errorToast, successToast } from "../../utils/Toast";
 
 const Users = () => {
   const [users, setUsers] = useState([]);
@@ -17,9 +18,13 @@ const Users = () => {
   };
   const blockUser = async (id) => {
     try {
-      
-      await api.patch(`/admin/block/${id}`);
+      const res = await api.patch(`/admin/block/${id}`);
       fetchUsers();
+      if (res) {
+        successToast("Successfully Block the user");
+      } else {
+        errorToast("Unable to Block the user");
+      }
     } catch (error) {
       console.error("Error blocking user:", error);
     }
@@ -27,8 +32,13 @@ const Users = () => {
 
   const unblockUser = async (id) => {
     try {
-      await api.patch(`/admin/unblock/${id}`);
+      const res = await api.patch(`/admin/unblock/${id}`);
       fetchUsers();
+      if (res) {
+        successToast("Successfully UnBlock the user");
+      } else {
+        errorToast("Unable to UnBlock the user");
+      }
     } catch (error) {
       console.error("Error unblocking user:", error);
     }
