@@ -1,13 +1,25 @@
-import { Container, Row, Col, Form, Card, Button } from "react-bootstrap";
+import {
+  Container,
+  Row,
+  Col,
+  Form,
+  Card,
+  Button,
+  Modal,
+} from "react-bootstrap";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { placeOrder } from "../redux/orders/ordersThunk";
+import { successToast, errorToast } from "../utils/Toast";
 import api from "../api/axios";
+
 const Checkout = () => {
   const { items, totalPrice, totalCount } = useSelector((state) => state.cart);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -29,13 +41,6 @@ const Checkout = () => {
   const total = totalPrice + shippingFee;
 
   const handlePlaceOrder = async () => {
-    const { name, phone, addressLine1, city, state, pincode } = formData;
-
-    if (!name || !phone || !addressLine1 || !city || !state || !pincode) {
-      alert("Please fill all fields");
-      return;
-    }
-
     try {
       const res = await api.get("/cart");
       const cartId = res.data.Cart._id;
@@ -48,12 +53,27 @@ const Checkout = () => {
         }),
       ).unwrap();
 
-      alert("Order placed successfully");
-
+      successToast("Order placed successfully");
+      setShowModal(false);
       navigate("/orders");
     } catch (error) {
-      alert(error);
+      const errorMessage =
+        typeof error === "string"
+          ? error
+          : error?.message || "Failed to place order";
+      errorToast(errorMessage);
+      setShowModal(false);
     }
+  };
+  // Trigger modal only after validation
+  const initiateCheckout = () => {
+    const { name, phone, addressLine1, city, state, pincode } = formData;
+
+    if (!name || !phone || !addressLine1 || !city || !state || !pincode) {
+      errorToast("Please fill all the required fields");
+      return;
+    }
+    setShowModal(true);
   };
 
   if (items.length === 0) {
@@ -72,14 +92,12 @@ const Checkout = () => {
           <Card className="checkout-card">
             <Card.Body>
               <h4 className="mb-4">Shipping Address</h4>
-
               <Form>
                 <Row>
                   <Col md={6}>
                     <Form.Group className="mb-3">
                       <Form.Label>Name</Form.Label>
                       <Form.Control
-                        required
                         type="text"
                         name="name"
                         value={formData.name}
@@ -87,7 +105,6 @@ const Checkout = () => {
                       />
                     </Form.Group>
                   </Col>
-
                   <Col md={6}>
                     <Form.Group className="mb-3">
                       <Form.Label>Phone</Form.Label>
@@ -100,7 +117,6 @@ const Checkout = () => {
                     </Form.Group>
                   </Col>
                 </Row>
-
                 <Form.Group className="mb-3">
                   <Form.Label>Address</Form.Label>
                   <Form.Control
@@ -111,7 +127,6 @@ const Checkout = () => {
                     onChange={handleChange}
                   />
                 </Form.Group>
-
                 <Row>
                   <Col md={4}>
                     <Form.Group className="mb-3">
@@ -124,7 +139,6 @@ const Checkout = () => {
                       />
                     </Form.Group>
                   </Col>
-
                   <Col md={4}>
                     <Form.Group className="mb-3">
                       <Form.Label>State</Form.Label>
@@ -136,7 +150,6 @@ const Checkout = () => {
                       />
                     </Form.Group>
                   </Col>
-
                   <Col md={4}>
                     <Form.Group className="mb-3">
                       <Form.Label>Pincode</Form.Label>
@@ -149,9 +162,7 @@ const Checkout = () => {
                     </Form.Group>
                   </Col>
                 </Row>
-
                 <h4 className="mt-4 mb-3">Payment Method</h4>
-
                 <Form.Check
                   type="radio"
                   label="Cash On Delivery"
@@ -160,7 +171,6 @@ const Checkout = () => {
                   checked={formData.paymentMethod === "COD"}
                   onChange={handleChange}
                 />
-
                 <Form.Check
                   type="radio"
                   label="UPI (Coming Soon)"
@@ -176,11 +186,9 @@ const Checkout = () => {
           <Card className="order-summary-card">
             <Card.Body>
               <h4 className="mb-2">Order Summary</h4>
-
               <p className="text-muted mb-4">
                 {totalCount} item{totalCount !== 1 ? "s" : ""}
               </p>
-
               {items.map((item) => (
                 <div
                   key={item._id}
@@ -188,38 +196,30 @@ const Checkout = () => {
                 >
                   <div>
                     <p className="mb-0 fw-semibold">{item.bookId.title}</p>
-
                     <small className="text-muted">
                       ₹{item.bookId.price} × {item.quantity}
                     </small>
                   </div>
-
                   <span>₹{item.bookId.price * item.quantity}</span>
                 </div>
               ))}
-
               <hr />
-
               <div className="d-flex justify-content-between mb-2">
                 <span>Subtotal</span>
                 <span>₹{totalPrice}</span>
               </div>
-
               <div className="d-flex justify-content-between mb-2">
                 <span>Shipping</span>
                 <span>₹{shippingFee}</span>
               </div>
-
               <hr />
-
               <div className="d-flex justify-content-between fw-bold fs-5 mb-4">
                 <span>Total</span>
                 <span>₹{total}</span>
               </div>
-
               <Button
                 className="w-100 place-order-btn"
-                onClick={handlePlaceOrder}
+                onClick={initiateCheckout}
               >
                 Place Order
               </Button>
@@ -227,6 +227,50 @@ const Checkout = () => {
           </Card>
         </Col>
       </Row>
+
+      <Modal
+        show={showModal}
+        onHide={() => setShowModal(false)}
+        centered
+        dialogClassName="admin-modal"
+      >
+        <Modal.Body className="text-center py-5 px-4">
+          <div
+            className="d-flex align-items-center justify-content-center mx-auto mb-4"
+            style={{
+              width: "70px",
+              height: "70px",
+              borderRadius: "50%",
+              backgroundColor: "#e7f3ff",
+            }}
+          >
+            <i className="bi bi-cart-check fs-2 text-primary"></i>
+          </div>
+
+          <h4 className="fw-bold mb-2">Ready to place order?</h4>
+          <p className="text-muted px-3">
+            Are you sure you want to finalize this order? This action will
+            process your request immediately.
+          </p>
+
+          <div className="d-flex justify-content-center gap-3 mt-4">
+            <Button
+              variant="light"
+              className="admin-modal-btn px-4"
+              onClick={() => setShowModal(false)}
+            >
+              Dismiss
+            </Button>
+            <Button
+              variant="primary"
+              className="admin-modal-btn px-4"
+              onClick={handlePlaceOrder}
+            >
+              Confirm & Place
+            </Button>
+          </div>
+        </Modal.Body>
+      </Modal>
     </Container>
   );
 };

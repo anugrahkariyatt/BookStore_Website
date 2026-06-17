@@ -1,20 +1,19 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
+import { successToast, errorToast } from "../utils/Toast"; // Assuming you have toast utils
 
 const Orders = () => {
   const navigate = useNavigate();
-
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selectedOrderId, setSelectedOrderId] = useState(null); // Track order for modal
 
   const fetchOrders = async () => {
     try {
       setLoading(true);
-
       const res = await api.get("/orders");
-
       setOrders(res.data.orders);
     } catch (err) {
       setError(err.response?.data?.error || "Failed to fetch orders");
@@ -27,56 +26,35 @@ const Orders = () => {
     fetchOrders();
   }, []);
 
-  const handleCancelOrder = async (orderId) => {
-    const confirmCancel = window.confirm(
-      "Are you sure you want to cancel this order?",
-    );
-
-    if (!confirmCancel) return;
-
+  const handleCancelOrder = async () => {
+    if (!selectedOrderId) return;
     try {
-      await api.patch(`/orders/${orderId}/cancel`);
-
+      await api.patch(`/orders/${selectedOrderId}/cancel`);
       setOrders((prev) =>
         prev.map((order) =>
-          order._id === orderId ? { ...order, status: "Cancelled" } : order,
-        ),
+          order._id === selectedOrderId ? { ...order, status: "Cancelled" } : order
+        )
       );
+      successToast("Order cancelled successfully");
     } catch (err) {
-      alert(err.response?.data?.error || "Failed to cancel order");
+      errorToast(err.response?.data?.error || "Failed to cancel order");
+    } finally {
+      setSelectedOrderId(null);
     }
   };
 
   const getStatusClass = (status) => {
     switch (status) {
-      case "Delivered":
-        return "status-delivered";
-      case "Shipped":
-        return "status-shipped";
-      case "Pending":
-        return "status-pending";
-      case "Cancelled":
-        return "status-cancelled";
-      default:
-        return "";
+      case "Delivered": return "status-delivered";
+      case "Shipped": return "status-shipped";
+      case "Pending": return "status-pending";
+      case "Cancelled": return "status-cancelled";
+      default: return "";
     }
   };
 
-  if (loading) {
-    return (
-      <div className="container py-5 text-center">
-        <h4>Loading orders...</h4>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="container py-5 text-center">
-        <h4>{error}</h4>
-      </div>
-    );
-  }
+  if (loading) return <div className="container py-5 text-center"><h4>Loading orders...</h4></div>;
+  if (error) return <div className="container py-5 text-center"><h4>{error}</h4></div>;
 
   return (
     <div className="orders-page py-5">
@@ -92,55 +70,34 @@ const Orders = () => {
           <div className="row g-4">
             {orders.map((order) => (
               <div key={order._id} className="col-12">
-                <div className="order-card">
-                  <div className="order-header">
+                <div className="order-card p-3 border rounded shadow-sm">
+                  <div className="order-header d-flex justify-content-between align-items-center">
                     <div>
-                      <h5 className="mb-1">
-                        Order #{order._id.slice(-6).toUpperCase()}
-                      </h5>
-
-                      <p className="text-muted mb-0">
-                        Placed on{" "}
-                        {new Date(order.createdAt).toLocaleDateString()}
-                      </p>
+                      <h5 className="mb-1">Order #{order._id.slice(-6).toUpperCase()}</h5>
+                      <p className="text-muted mb-0">Placed on {new Date(order.createdAt).toLocaleDateString()}</p>
                     </div>
-
-                    <span
-                      className={`status-badge ${getStatusClass(order.status)}`}
-                    >
-                      {order.status}
-                    </span>
+                    <span className={`status-badge ${getStatusClass(order.status)}`}>{order.status}</span>
                   </div>
 
                   <hr />
 
-                  <div className="order-body">
-                    <div>
-                      <h6>Items</h6>
-
-                      <ul className="order-items">
-                        {order.items.map((item) => (
-                          <li key={item._id}>
-                            {item.title} × {item.quantity}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    <div className="order-summary d-flex flex-column gap-2">
+                  <div className="order-body d-flex justify-content-between">
+                    <ul className="order-items list-unstyled">
+                      {order.items.map((item) => (
+                        <li key={item._id}>{item.title} × {item.quantity}</li>
+                      ))}
+                    </ul>
+                    
+                    <div className="order-summary d-flex flex-column gap-2 text-end">
                       <h5>₹{order.totalPrice}</h5>
-
-                      <button
-                        className="btn btn-outline-dark"
-                        onClick={() => navigate(`/orders/${order._id}`)}
-                      >
-                        View Details
-                      </button>
-
+                      <button className="btn btn-outline-dark btn-sm" onClick={() => navigate(`/orders/${order._id}`)}>View Details</button>
+                      
                       {order.status === "Pending" && (
                         <button
-                          className="btn btn-danger"
-                          onClick={() => handleCancelOrder(order._id)}
+                          className="btn btn-danger btn-sm"
+                          data-bs-toggle="modal"
+                          data-bs-target="#cancelModal"
+                          onClick={() => setSelectedOrderId(order._id)}
                         >
                           Cancel Order
                         </button>
@@ -152,6 +109,23 @@ const Orders = () => {
             ))}
           </div>
         )}
+      </div>
+
+      {/* Cancel Confirmation Modal */}
+      <div className="modal fade" id="cancelModal" tabIndex="-1" aria-hidden="true">
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content border-0 shadow">
+            <div className="modal-body text-center py-4">
+              <i className="bi bi-x-circle text-danger fs-1"></i>
+              <h5 className="mt-3">Cancel Order?</h5>
+              <p className="text-muted">Are you sure you want to cancel this order? This action cannot be undone.</p>
+              <div className="d-flex justify-content-center gap-2 mt-3">
+                <button className="btn btn-light" data-bs-dismiss="modal">No, Keep It</button>
+                <button className="btn btn-danger" data-bs-dismiss="modal" onClick={handleCancelOrder}>Yes, Cancel It</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

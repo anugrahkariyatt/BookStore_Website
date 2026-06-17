@@ -19,16 +19,15 @@ import Orders from "./pages/Orders";
 import OrderDetails from "./pages/OrderDetails";
 import Checkout from "./pages/CheckOut";
 import Profile from "./components/ui/Profile";
-
 import { useDispatch } from "react-redux";
-import { checkAuth } from "./redux/auth/authThunk";
 import { useEffect } from "react";
+import { fetchCurrentUser } from "./redux/auth/authThunk";
+import ProtectedRoute from "./components/ui/ProtectedRoute";
 
 function App() {
   const dispatch = useDispatch();
-
   useEffect(() => {
-    dispatch(checkAuth());
+    dispatch(fetchCurrentUser());
   }, [dispatch]);
 
   return (
@@ -36,26 +35,30 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route element={<AdminLayout />}>
-          <Route path="/dashboard" element={<AdminDashBoard />} />
-          <Route path="/adminbook" element={<AdminBooks />} />
-          <Route path="/admincategories" element={<AdminCategories />} />
-          <Route path="/adminorders" element={<AdminOrders />} />
-          <Route path="/adminorders/:id" element={<OrderDetails />} />
-          <Route path="/adminprofile" element={<AdminProfile />} />
-          <Route path="/users" element={<Users />} />
+        <Route element={<ProtectedRoute requireAdmin={true} />}>
+          <Route element={<AdminLayout />}>
+            <Route path="/dashboard" element={<AdminDashBoard />} />
+            <Route path="/adminbook" element={<AdminBooks />} />
+            <Route path="/admincategories" element={<AdminCategories />} />
+            <Route path="/adminorders" element={<AdminOrders />} />
+            <Route path="/adminorders/:id" element={<OrderDetails />} />
+            <Route path="/adminprofile" element={<AdminProfile />} />
+            <Route path="/users" element={<Users />} />
+          </Route>
         </Route>
-        <Route element={<MainLayout />}>
-          <Route path="/home" element={<Homepage />} />
-          <Route path="/product/:id" element={<Book />} />
-          <Route path="/books" element={<Books />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/orders" element={<Orders />} />
-          <Route path="/orders/:id" element={<OrderDetails />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/checkout" element={<Checkout />} />
+        <Route element={<ProtectedRoute requireAdmin={false} />}>
+          <Route element={<MainLayout />}>
+            <Route path="/home" element={<Homepage />} />
+            <Route path="/product/:id" element={<Book />} />
+            <Route path="/books" element={<Books />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/orders" element={<Orders />} />
+            <Route path="/orders/:id" element={<OrderDetails />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/checkout" element={<Checkout />} />
 
-          <Route path="/contact" element={<Contact />} />
+            <Route path="/contact" element={<Contact />} />
+          </Route>
         </Route>
       </Routes>
     </>

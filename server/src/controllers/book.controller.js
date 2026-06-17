@@ -201,9 +201,7 @@ export const getSingleBook = async (req, res) => {
 
 export const updateBook = async (req, res) => {
   try {
-    console.log("BODY:", req.body);
-    console.log("FILE:", req.file);
-    console.log("PARAMS:", req.params);
+    
     const BookId = req.params.id;
     if (!BookId) {
       return res.status(400).json({ error: "Book is not provided" });

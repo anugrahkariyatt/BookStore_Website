@@ -44,7 +44,10 @@ const SideBar = ({ SideBarOpen, closeSidebar }) => {
           transition: "transform 0.3s ease",
         }}
       >
-        <SidebarContent closeSidebar={closeSidebar} />
+        <SidebarContent
+          closeSidebar={closeSidebar}
+          handleLogout={handleLogout}
+        />{" "}
       </aside>
     </>
   );
@@ -132,7 +135,7 @@ const SidebarContent = ({ closeSidebar, handleLogout }) => {
       </ul>
 
       {/* Logout */}
-      <div className="mt-auto border-top p-3">
+      <div className="mt-auto border-top p-3 bg-black text-light">
         <button onClick={() => handleLogout()}>Logout</button>
       </div>
     </div>

@@ -6,6 +6,7 @@ import {
   addToWishList,
   removeFromWishList,
 } from "../../redux/wishlist/wishListSlice";
+import { errorToast, successToast } from "../../utils/Toast";
 
 const Cards = ({ selectedBooks }) => {
   const navigate = useNavigate();
@@ -15,8 +16,13 @@ const Cards = ({ selectedBooks }) => {
     try {
       const res = await api.post(`/cart/${id}`, { stock: 1 });
       console.log("Res", res);
-      dispatch(fetchCart());
+      if (res.status === 201) {
+        successToast("Added to cart");
+        dispatch(fetchCart());
+      }
     } catch (err) {
+      const errorMessage = err.response?.data?.error || "Unable to add to cart";
+      errorToast(errorMessage);
       console.log("error", err.message);
     }
   };

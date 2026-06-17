@@ -138,3 +138,37 @@ export const updateOrderStatus = async (req, res) => {
     res.status(500).json({ Error: err.message });
   }
 };
+
+export const getAdminOrderById = async (req, res) => {
+  try {
+    const order = await ordersModel
+      .findById(req.params.id)
+      .populate("userId", "name email");
+
+    if (!order) {
+      return res.status(404).json({
+        error: "Order not found",
+      });
+    }
+
+    res.status(200).json({
+      order: order,
+    });
+  } catch (err) {
+    console.log("Error", err.message);
+    return res.status(500).json({ Error: err.message });
+  }
+};
+
+// server/src/controllers/admin.controller.js
+
+export const getAdminProfile = async (req, res) => {
+  try {
+    const admin = await User.findById(req.user.userId).select("-password");
+    if (!admin) return res.status(404).json({ error: "Admin not found" });
+
+    res.status(200).json({ admin });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

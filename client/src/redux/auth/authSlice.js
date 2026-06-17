@@ -1,8 +1,10 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { loginUser, logoutUser, checkAuth } from "./authThunk";
+import { fetchCurrentUser, loginUser, logoutUser } from "./authThunk";
+
 const initialState = {
   user: null,
   isAuthenticated: false,
+  authtoken: null,
   loading: false,
   error: null,
 };
@@ -27,35 +29,36 @@ const authSlice = createSlice({
       })
 
       .addCase(loginUser.fulfilled, (state, action) => {
+
         state.loading = false;
         state.user = action.payload.user;
         state.isAuthenticated = true;
+                console.log(action, "--------->>");
+
       })
 
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
+      .addCase(fetchCurrentUser.pending, (state) => {
+        state.loading = false;
+      })
+      .addCase(fetchCurrentUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload;
+        state.isAuthenticated = true;
+      })
+      .addCase(fetchCurrentUser.rejected, (state) => {
+        state.loading = false;
+        state.user = null;
+        state.isAuthenticated = false;
+      })
       .addCase(logoutUser.fulfilled, (state) => {
         state.user = null;
         state.isAuthenticated = false;
         state.loading = false;
         state.error = null;
-      })
-      .addCase(checkAuth.pending, (state) => {
-        state.loading = true;
-      })
-
-      .addCase(checkAuth.fulfilled, (state, action) => {
-        state.loading = false;
-        state.user = action.payload.user;
-        state.isAuthenticated = true;
-      })
-
-      .addCase(checkAuth.rejected, (state) => {
-        state.loading = false;
-        state.user = null;
-        state.isAuthenticated = false;
       });
   },
 });

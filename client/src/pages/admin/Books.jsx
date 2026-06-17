@@ -1,13 +1,33 @@
 import { useEffect, useState } from "react";
 import api from "../../api/axios";
 import { errorToast, successToast } from "../../utils/Toast";
+import {
+  object,
+  string,
+  minLength,
+  number,
+  safeParse,
+  pipe,
+  title,
+} from "valibot";
+
+const bookSchema = pipe(
+  object({
+    title: pipe(string(), minLength(1, "Title must be atlest 1 Characters")),
+    author: pipe(string(), minLength(2, "Name must be at atlest 2 Characters")),
+    price: pipe(number()),
+    stock: pipe(number()),
+    category: pipe(string(),)
+  }),
+);
 
 const Books = () => {
   const [books, setBooks] = useState([]);
   const [isEditMode, setIsEditMode] = useState(false);
   const [categories, setCategories] = useState([]);
   const [selectedBook, setSelectedBook] = useState(null);
-
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [form, setForm] = useState({
     title: "",
     author: "",
@@ -62,10 +82,12 @@ const Books = () => {
     fetchCategories();
   }, []);
 
-  const fetchBooks = async () => {
+  const fetchBooks = async (page = 1) => {
     try {
-      const res = await api.get("/books/all");
+      const res = await api.get(`/books/getBooks?page=${page}&limit=6`);
       setBooks(res.data.books);
+      setTotalPages(res.data.totalPages);
+      setCurrentPage(res.data.page);
     } catch (error) {
       console.error("Error fetching books:", error);
     }
@@ -243,6 +265,48 @@ const Books = () => {
               </tbody>
             </table>
           </div>
+          <nav aria-label="Book pagination">
+            <ul className="pagination justify-content-center">
+              {/* Previous Button */}
+              <li
+                className={`page-item ${currentPage === 1 ? "disabled" : ""}`}
+              >
+                <button
+                  className="page-link"
+                  onClick={() => fetchBooks(currentPage - 1)}
+                >
+                  Previous
+                </button>
+              </li>
+
+              {/* Page Numbers */}
+              {[...Array(totalPages)].map((_, index) => (
+                <li
+                  key={index}
+                  className={`page-item ${currentPage === index + 1 ? "active" : ""}`}
+                >
+                  <button
+                    className="page-link"
+                    onClick={() => fetchBooks(index + 1)}
+                  >
+                    {index + 1}
+                  </button>
+                </li>
+              ))}
+
+              {/* Next Button */}
+              <li
+                className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}
+              >
+                <button
+                  className="page-link"
+                  onClick={() => fetchBooks(currentPage + 1)}
+                >
+                  Next
+                </button>
+              </li>
+            </ul>
+          </nav>
         </div>
       </div>
 
@@ -378,52 +442,65 @@ const Books = () => {
         </div>
       </div>
 
+      {/* Delete Book Confirmation Modal */}
       <div
         className="modal fade"
         id="deleteModal"
         tabIndex="-1"
-        aria-labelledby="deleteModalLabel"
         aria-hidden="true"
       >
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title" id="deleteModalLabel">
-                Confirm Delete
-              </h5>
-
+        <div
+          className="modal-dialog modal-dialog-centered"
+          style={{ maxWidth: "600px" }}
+        >
+          <div className="modal-content border-0 shadow-lg">
+            <div className="modal-header border-0 pb-0">
               <button
                 type="button"
                 className="btn-close"
                 data-bs-dismiss="modal"
+                aria-label="Close"
               ></button>
             </div>
 
-            <div className="modal-body">
-              Are you sure you want to delete this book?
-              <br />
-              <strong>{selectedBook?.title}</strong>
-              <br />
-              This action cannot be undone.
-            </div>
-
-            <div className="modal-footer">
-              <button
-                type="button"
-                className="btn btn-secondary"
-                data-bs-dismiss="modal"
+            <div className="modal-body text-center pt-0 pb-4 px-4">
+              <div
+                className="d-inline-flex align-items-center justify-content-center bg-danger bg-opacity-10 rounded-circle mb-3"
+                style={{ width: "80px", height: "80px" }}
               >
-                Cancel
-              </button>
+                <i
+                  className="bi bi-trash3-fill text-danger"
+                  style={{ fontSize: "2.5rem" }}
+                ></i>
+              </div>
 
-              <button
-                type="button"
-                className="btn btn-danger"
-                onClick={() => deleteBook(selectedBook._id)}
-                data-bs-dismiss="modal"
-              >
-                Delete
-              </button>
+              <h4 className="fw-bold mb-3">Delete Book?</h4>
+
+              <p className="text-muted mb-4 fs-5">
+                Are you sure you want to delete the book <br />
+                <strong className="text-dark">"{selectedBook?.title}"</strong>?
+                <br />
+                This action is permanent and cannot be undone.
+              </p>
+
+              <div className="d-flex justify-content-center gap-3 mt-2 px-4">
+                <button
+                  type="button"
+                  className="btn btn-light border py-2 fw-semibold w-50"
+                  data-bs-dismiss="modal"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  className="btn btn-danger py-2 fw-semibold w-50 shadow-sm"
+                  onClick={() => deleteBook(selectedBook?._id)}
+                  data-bs-dismiss="modal"
+                >
+                  Yes, Delete
+                </button>
+              </div>
             </div>
           </div>
         </div>

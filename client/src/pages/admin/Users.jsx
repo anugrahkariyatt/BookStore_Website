@@ -4,6 +4,8 @@ import { errorToast, successToast } from "../../utils/Toast";
 
 const Users = () => {
   const [users, setUsers] = useState([]);
+  const [selectedUser, setSelectedUser] = useState(null); // Tracks the user being acted upon
+
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -13,34 +15,23 @@ const Users = () => {
       const res = await api.get("/admin/users");
       setUsers(res.data.Users);
     } catch (error) {
-      console.error("Error fetching books:", error);
-    }
-  };
-  const blockUser = async (id) => {
-    try {
-      const res = await api.patch(`/admin/block/${id}`);
-      fetchUsers();
-      if (res) {
-        successToast("Successfully Block the user");
-      } else {
-        errorToast("Unable to Block the user");
-      }
-    } catch (error) {
-      console.error("Error blocking user:", error);
+      console.error("Error fetching users:", error);
     }
   };
 
-  const unblockUser = async (id) => {
+  const handleAction = async () => {
+    if (!selectedUser) return;
+    
     try {
-      const res = await api.patch(`/admin/unblock/${id}`);
-      fetchUsers();
-      if (res) {
-        successToast("Successfully UnBlock the user");
-      } else {
-        errorToast("Unable to UnBlock the user");
-      }
+      const isBlocking = !selectedUser.isBlocked;
+      const endpoint = isBlocking ? `/admin/block/${selectedUser._id}` : `/admin/unblock/${selectedUser._id}`;
+      
+      await api.patch(endpoint);
+      successToast(`Successfully ${isBlocking ? "Blocked" : "Unblocked"} the user`);
+      fetchUsers(); // Refresh list
+      setSelectedUser(null);
     } catch (error) {
-      console.error("Error unblocking user:", error);
+      errorToast("Action failed");
     }
   };
 
@@ -53,61 +44,57 @@ const Users = () => {
 
       <div className="card shadow-sm border-0">
         <div className="card-body">
-          <div className="table-responsive">
-            <table className="table table-hover align-middle">
-              <thead className="table-light">
-                <tr>
-                  <th>#</th>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Role</th>
-                  <th>Status</th>
-                  <th>Joined</th>
-                  <th>Actions</th>
+          <table className="table table-hover align-middle">
+            <thead className="table-light">
+              <tr>
+                <th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((user, index) => (
+                <tr key={user._id}>
+                  <td>{user.name}</td>
+                  <td>{user.email}</td>
+                  <td><span className="badge bg-light text-dark">{user.role}</span></td>
+                  <td>
+                    <span className={`badge ${user.isBlocked ? "bg-danger" : "bg-success"}`}>
+                      {user.isBlocked ? "Blocked" : "Active"}
+                    </span>
+                  </td>
+                  <td>
+                    <button
+                      className={`btn btn-sm ${user.isBlocked ? "btn-outline-dark" : "btn-dark"}`}
+                      data-bs-toggle="modal"
+                      data-bs-target="#userModal"
+                      onClick={() => setSelectedUser(user)}
+                    >
+                      {user.isBlocked ? "Unblock" : "Block"}
+                    </button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {users.map((user) => (
-                  <tr key={user._id}>
-                    <td>1</td>
-                    <td>{user.name}</td>
-                    <td>{user.email}</td>
-                    <td>
-                      <span className="">{user.role}</span>
-                    </td>
-                    <td>
-                      <span
-                        className={`badge ${
-                          user.isBlocked ? "bg-danger" : "bg-success"
-                        }`}
-                      >
-                        {user.isBlocked ? "Blocked" : "Active"}
-                      </span>
-                    </td>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-                    <td>{new Date(user.createdAt).toLocaleDateString()}</td>
-
-                    <td>
-                      {user.isBlocked ? (
-                        <button
-                          className="btn btn-sm btn-outline-dark"
-                          onClick={() => unblockUser(user._id)}
-                        >
-                          Unblock
-                        </button>
-                      ) : (
-                        <button
-                          className="btn btn-sm btn-dark"
-                          onClick={() => blockUser(user._id)}
-                        >
-                          Block
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      {/* Confirmation Modal */}
+      <div className="modal fade" id="userModal" tabIndex="-1" aria-hidden="true">
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content border-0 shadow">
+            <div className="modal-body text-center py-4">
+              <i className={`bi ${selectedUser?.isBlocked ? "bi-unlock" : "bi-lock"} fs-1 text-warning`}></i>
+              <h5 className="mt-3">
+                {selectedUser?.isBlocked ? "Unblock" : "Block"} {selectedUser?.name}?
+              </h5>
+              <p className="text-muted">Are you sure you want to perform this action?</p>
+              <div className="d-flex justify-content-center gap-2 mt-3">
+                <button className="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button className="btn btn-dark" data-bs-dismiss="modal" onClick={handleAction}>
+                  Confirm
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

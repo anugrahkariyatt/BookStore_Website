@@ -15,6 +15,20 @@ export const loginUser = createAsyncThunk(
     }
   },
 );
+
+export const fetchCurrentUser = createAsyncThunk(
+  "auth/fetchCurrentUser",
+  async (_, thunkAPI) => {
+    try {
+      const res = await api.post("/me");
+      console.log("Thunk res", res);
+
+      return res.data.user;
+    } catch (error) {
+      return thunkAPI.rejectWithValue("Not authenticated");
+    }
+  },
+);
 export const logoutUser = createAsyncThunk(
   "auth/logout",
   async (__, thunkAPI) => {
@@ -27,18 +41,4 @@ export const logoutUser = createAsyncThunk(
       );
     }
   },
-);
-
-export const checkAuth = createAsyncThunk(
-  "auth/checkAuth",
-  async (_, thunkAPI) => {
-    try {
-      const res = await api.get("/profile");
-      return res.data;
-    } catch (error) {
-      return thunkAPI.rejectWithValue(
-        error.response?.data?.message || "Unauthorized"
-      );
-    }
-  }
 );

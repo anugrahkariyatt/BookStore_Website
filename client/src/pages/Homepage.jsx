@@ -5,11 +5,13 @@ import AuthorsSection from "../components/home/AuthorsSection ";
 import CategorySlider from "../components/home/CategorySlider";
 import { useState, useEffect } from "react";
 import api from "../api/axios";
+import { useSelector } from "react-redux";
 
 const Homepage = () => {
   const [topSellingBooks, setTopSellingBooks] = useState([]);
   const [newBooks, setNewBooks] = useState([]);
-
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
+  console.log("User>>>------>>>>>>>>", user, "Autheticated", isAuthenticated);
   useEffect(() => {
     const fetchBooks = async () => {
       try {

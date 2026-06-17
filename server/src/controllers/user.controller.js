@@ -6,7 +6,7 @@ import generateToken from "../utils/generateJwtToken.js";
 
 export const signup = async (req, res) => {
   try {
-    const { name, email, role, password } = req.body;
+    const { name, email, password } = req.body;
 
     const existingUser = await User.findOne({ email });
 
@@ -21,7 +21,7 @@ export const signup = async (req, res) => {
     const newUser = new User({
       name,
       email,
-      role,
+      role: "user",
       password: hashedPassword,
     });
 
@@ -104,6 +104,19 @@ export const getProfile = async (req, res) => {
 
     res.status(500).json({
       error: error.message,
+    });
+  }
+};
+export const me = async (req, res) => {
+  try {
+    const user = req.user;
+
+    res.status(200).json({
+      user,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      error: err.message,
     });
   }
 };

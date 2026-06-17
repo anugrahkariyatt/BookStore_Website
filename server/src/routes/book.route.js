@@ -19,7 +19,7 @@ const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
 router.post("/createbook", upload.single("coverImage"), createBook);
 
-router.get("/", getBooks);
+router.get("/getBooks", getBooks);
 router.get("/all", fetchAllBooks);
 router.get("/filter", fetchBookByFilter);
 router.get("/book-by-category/:id", fetchBookByCategory);

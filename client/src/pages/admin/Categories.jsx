@@ -1,12 +1,21 @@
 import { useEffect, useState } from "react";
 import api from "../../api/axios";
 import { errorToast, successToast } from "../../utils/Toast";
+import { object, string, minLength, pipe, safeParse } from "valibot";
+const categorySchema = object({
+  name: pipe(
+    string(),
+    minLength(3, "Category name must be at least 3 characters"),
+  ),
+});
 
 const Categories = () => {
   const [categories, setCategories] = useState([]);
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedCat, setSelectedCate] = useState(null);
+  const [deleteError, setDeleteError] = useState("");
+  const [errors, setErrors] = useState({});
 
   const [form, setForm] = useState({
     name: "",
@@ -27,6 +36,23 @@ const Categories = () => {
 
   const createCategory = async () => {
     try {
+      const result = safeParse(categorySchema, form);
+      if (!result.success) {
+        const fieldErrors = {};
+
+        result.issues.forEach((issue) => {
+          const fieldName = issue.path?.[0]?.key;
+
+          if (fieldName) {
+            fieldErrors[fieldName] = issue.message;
+          }
+        });
+
+        setErrors(fieldErrors);
+        return;
+      }
+      setErrors({});
+
       const res = await api.post("/categories/createcategory", form);
 
       setCategories((prev) => [
@@ -34,7 +60,8 @@ const Categories = () => {
         res.data.category || res.data.Category,
       ]);
       if (res) {
-        successToast("Successfully create the Category");
+        document.querySelector("#categoryModal .btn-close")?.click();
+        successToast("Successfully created the Category");
       } else {
         errorToast("Unable to create the Category");
       }
@@ -47,6 +74,7 @@ const Categories = () => {
 
   const handleEdit = (category) => {
     setSelectedCategory(category);
+    // console.log("selectedCategory", selectedCategory?._id);
     setIsEditMode(true);
 
     setForm({
@@ -55,19 +83,36 @@ const Categories = () => {
   };
 
   const updateCategory = async () => {
+    // console.log("selectedCategory", selectedCategory?._id);
     try {
-      const res = await api.patch("/categories", {
-        categoryOldName: selectedCategory.name,
+      const result = safeParse(categorySchema, form);
+      if (!result.success) {
+        const fieldErrors = {};
+
+        result.issues.forEach((issue) => {
+          const fieldName = issue.path?.[0]?.key;
+
+          if (fieldName) {
+            fieldErrors[fieldName] = issue.message;
+          }
+        });
+
+        setErrors(fieldErrors);
+        return;
+      }
+      setErrors({});
+      if (!selectedCategory) {
+        errorToast("No category selected");
+        return;
+      }
+      const res = await api.patch(`/categories/${selectedCategory._id}`, {
         categoryNewName: form.name,
       });
 
-      setCategories((prev) =>
-        prev.map((cat) =>
-          cat._id === selectedCategory._id ? res.data.Category : cat,
-        ),
-      );
       if (res) {
-        successToast("Successfully update the Category");
+        document.querySelector("#categoryModal .btn-close")?.click();
+
+        successToast("Successfully updated the Category");
       } else {
         errorToast("Unable to update the Category");
       }
@@ -77,23 +122,25 @@ const Categories = () => {
       console.error(error);
     }
   };
-  const deleteCategory = async (id, name) => {
-    if (!window.confirm("Are you sure?")) return;
 
+  const deleteCategory = async (id, name) => {
     try {
       const res = await api.delete("/categories", {
         data: {
           name: name,
         },
       });
+
       setCategories((prev) => prev.filter((cat) => cat._id !== id));
-      if (res) {
-        successToast("Successfully delete the Category");
+      successToast("Successfully deleted the Category");
+    } catch (error) {
+      if (error.response && error.response.status === 400) {
+        setDeleteError(error.response.data.error);
+        document.getElementById("triggerErrorModal").click();
       } else {
         errorToast("Unable to delete the Category");
+        console.error("Error deleting category:", error);
       }
-    } catch (error) {
-      console.error("Error deleting category:", error);
     }
   };
 
@@ -146,7 +193,7 @@ const Categories = () => {
                     <tr key={item._id}>
                       <td>{index + 1}</td>
                       <td>{item.name}</td>
-                      <td>{item.bookCount}</td>
+                      <td>{item.bookCount || 0}</td>
 
                       <td>
                         <button
@@ -176,6 +223,7 @@ const Categories = () => {
         </div>
       </div>
 
+      {/* Add/Edit Category Modal */}
       <div
         className="modal fade"
         id="categoryModal"
@@ -201,13 +249,22 @@ const Categories = () => {
                 type="text"
                 className="form-control"
                 placeholder="Category Name"
+                name="name"
                 value={form.name}
-                onChange={(e) =>
+                onChange={(e) => {
                   setForm({
                     name: e.target.value,
-                  })
-                }
+                  });
+
+                  setErrors((prev) => ({
+                    ...prev,
+                    name: "",
+                  }));
+                }}
               />
+              {errors.name && (
+                <div className="text-danger mt-1">{errors.name}</div>
+              )}
             </div>
 
             <div className="modal-footer">
@@ -221,7 +278,7 @@ const Categories = () => {
 
               <button
                 className="btn btn-primary"
-                data-bs-dismiss="modal"
+                // data-bs-dismiss="modal"
                 onClick={isEditMode ? updateCategory : createCategory}
               >
                 {isEditMode ? "Update Category" : "Add Category"}
@@ -235,49 +292,114 @@ const Categories = () => {
         className="modal fade"
         id="deleteModal"
         tabIndex="-1"
-        aria-labelledby="deleteModalLabel"
         aria-hidden="true"
       >
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title" id="deleteModalLabel">
-                Confirm Delete
-              </h5>
-
+        <div
+          className="modal-dialog modal-dialog-centered"
+          style={{ maxWidth: "600px" }}
+        >
+          <div className="modal-content border-0 shadow-lg">
+            <div className="modal-header border-0 pb-0">
               <button
                 type="button"
                 className="btn-close"
                 data-bs-dismiss="modal"
+                aria-label="Close"
               ></button>
             </div>
 
-            <div className="modal-body">
-              Are you sure you want to delete this book?
-              <br />
-              <strong>{selectedCat?.name}</strong>
-              <br />
-              This action cannot be undone.
+            <div className="modal-body text-center pt-0 pb-4 px-4">
+              <div
+                className="d-inline-flex align-items-center justify-content-center bg-danger bg-opacity-10 rounded-circle mb-3"
+                style={{ width: "80px", height: "80px" }}
+              >
+                <i
+                  className="bi bi-trash3-fill text-danger"
+                  style={{ fontSize: "2.5rem" }}
+                ></i>
+              </div>
+
+              <h4 className="fw-bold mb-3">Delete Category?</h4>
+
+              <p className="text-muted mb-4 fs-5">
+                You are about to delete the category{" "}
+                <strong className="text-dark">"{selectedCat?.name}"</strong>.
+                <br />
+                This action is permanent and cannot be undone.
+              </p>
+
+              <div className="d-flex justify-content-center gap-3 mt-2 px-4">
+                <button
+                  type="button"
+                  className="btn btn-light border py-2 fw-semibold w-50"
+                  data-bs-dismiss="modal"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  className="btn btn-danger py-2 fw-semibold w-50 shadow-sm"
+                  onClick={() =>
+                    deleteCategory(selectedCat?._id, selectedCat?.name)
+                  }
+                  data-bs-dismiss="modal"
+                >
+                  Yes, Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button
+        id="triggerErrorModal"
+        data-bs-toggle="modal"
+        data-bs-target="#cannotDeleteModal"
+        className="d-none"
+      ></button>
+
+      {/* Cannot Delete Error Modal */}
+      <div
+        className="modal fade"
+        id="cannotDeleteModal"
+        tabIndex="-1"
+        aria-labelledby="cannotDeleteModalLabel"
+        aria-hidden="true"
+      >
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content border-danger">
+            <div className="modal-header bg-danger text-white">
+              <h5 className="modal-title" id="cannotDeleteModalLabel">
+                Action Denied
+              </h5>
+              <button
+                type="button"
+                className="btn-close btn-close-white"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
             </div>
 
-            <div className="modal-footer">
-              <button
-                type="button"
-                className="btn btn-secondary"
-                data-bs-dismiss="modal"
-              >
-                Cancel
-              </button>
+            <div className="modal-body text-center py-4">
+              <i
+                className="bi bi-exclamation-octagon-fill text-danger"
+                style={{ fontSize: "3rem" }}
+              ></i>
+              <h5 className="mt-3">Cannot Delete Category</h5>
+              <p className="text-muted mt-2">
+                {deleteError ||
+                  "You must delete all books in this category before deleting the category itself."}
+              </p>
+            </div>
 
+            <div className="modal-footer justify-content-center">
               <button
                 type="button"
-                className="btn btn-danger"
-                onClick={() =>
-                  deleteCategory(selectedCat?._id, selectedCat?.name)
-                }
+                className="btn btn-secondary px-4"
                 data-bs-dismiss="modal"
               >
-                Delete
+                Understood
               </button>
             </div>
           </div>

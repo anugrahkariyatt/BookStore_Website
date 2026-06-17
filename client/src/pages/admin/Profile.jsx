@@ -15,11 +15,7 @@ const Profile = () => {
         <div className="card-body">
 
           <div className="text-center mb-4">
-            <img
-              src="https://via.placeholder.com/120"
-              alt="Profile"
-              className="rounded-circle border"
-            />
+           
 
             <h4 className="mt-3">Admin User</h4>
 

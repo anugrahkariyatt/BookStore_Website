@@ -1,3 +1,4 @@
+import booksModel from "../models/books.model.js";
 import categoriesModel from "../models/categories.model.js";
 
 export const createCategory = async (req, res) => {
@@ -57,18 +58,28 @@ export const getCategories = async (req, res) => {
 
 export const updateCategory = async (req, res) => {
   try {
-    const { categoryOldName, categoryNewName } = req.body;
-    if (!categoryOldName || !categoryNewName) {
+    console.log("Reach");
+
+    const categoryId = req.params.id;
+    // console.log("cateid", categoryId);
+
+    if (!categoryId) {
+      return res.status(400).json({ error: "Category Id is not provided" });
+    }
+    const { categoryNewName } = req.body;
+
+    if (!categoryNewName) {
       return res.status(400).json({
-        error:
-          "Both category old name and category new name are required for the update",
+        error: " category new name are required for the update",
       });
     }
 
-    const updateCategory = await categoriesModel.findOneAndUpdate(
-      { name: categoryOldName },
-      { name: categoryNewName },
-      { returnDocument: "after" },
+    const updateCategory = await categoriesModel.findByIdAndUpdate(
+      categoryId,
+      {
+        name: categoryNewName,
+      },
+      { new: true, runValidators: true },
     );
 
     if (!updateCategory) {
@@ -95,7 +106,20 @@ export const deleteCategory = async (req, res) => {
         error: "Category name is required to deleted",
       });
     }
-
+    const categoryToFind = await categoriesModel.findOne({ name: name });
+    if (!categoryToFind) {
+      return res.status(400).json({
+        error: "Category does not exist",
+      });
+    }
+    const associatedBooksCount = await booksModel.countDocuments({
+      category: categoryToFind._id,
+    });
+    if (associatedBooksCount > 0) {
+      return res.status(400).json({
+        error: `Cannot delete category '${name}'. There are ${associatedBooksCount} book(s) currently in this category.`,
+      });
+    }
     const deletedCategory = await categoriesModel.findOneAndDelete({
       name: name,
     });

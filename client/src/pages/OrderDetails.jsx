@@ -4,6 +4,7 @@ import api from "../api/axios";
 
 const OrderDetails = () => {
   const { id } = useParams();
+  console.log("IDDDDDDD", id);
 
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -12,7 +13,7 @@ const OrderDetails = () => {
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        const res = await api.get(`/orders/${id}`);
+        const res = await api.get(`/admin/orders/${id}`);
         setOrder(res.data.order);
       } catch (err) {
         setError(err.response?.data?.error || "Failed to fetch order details");

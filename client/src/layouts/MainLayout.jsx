@@ -20,7 +20,6 @@ const MainLayout = () => {
         <Footer />
       </div>
       {isCartOpen && <Cart />}
-      {console.log(">>>>>>>>>>>>>>>", isWishListOpen)}
       {isWishListOpen && <Wishlist />}
     </>
   );

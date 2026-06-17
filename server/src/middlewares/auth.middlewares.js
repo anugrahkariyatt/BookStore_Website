@@ -1,12 +1,10 @@
 import jwt from "jsonwebtoken";
 
 export const verifyToken = (req, res, next) => {
-  const token = req.cookies.authToken; // instead of Authorization header
+  const token = req.cookies.authToken; 
   if (!token) {
     return res.status(401).json({ error: "Access Denied" });
   }
-
- 
 
   try {
     const secretKey = process.env.JWT_SECRET;
@@ -14,7 +12,7 @@ export const verifyToken = (req, res, next) => {
     const decode = jwt.verify(token, secretKey);
 
     req.user = decode;
-    // console.log(">>>>>>hhh>>>>>>", req.user);
+    console.log(">>>>>>hhh>>>>>>", req.user);
 
     next();
   } catch (err) {

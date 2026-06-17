@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { object, string, minLength, email, safeParse, pipe } from "valibot";
 
@@ -19,8 +19,15 @@ const Login = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const { loading, error } = useSelector((state) => state.auth);
+  const { loading, error, user, isAuthenticated } = useSelector(
+    (state) => state.auth,
+  );
 
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      navigate(user.role === "admin" ? "/dashboard" : "/home");
+    }
+  }, [isAuthenticated, user, navigate]);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
