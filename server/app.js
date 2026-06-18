@@ -14,7 +14,7 @@ import cartRoute from "./src/routes/cart.router.js";
 
 import mongoDBConnect from "./src/config/db.config.js";
 const app = express();
-
+const frontendURL = process.env.FRONTEND_URL || "http://localhost:5173";
 app.use(
   cors({
     origin: frontendURL,
