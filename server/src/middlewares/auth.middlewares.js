@@ -12,7 +12,6 @@ export const verifyToken = (req, res, next) => {
     const decode = jwt.verify(token, secretKey);
 
     req.user = decode;
-    console.log(">>>>>>hhh>>>>>>", req.user);
 
     next();
   } catch (err) {

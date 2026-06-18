@@ -1,7 +1,6 @@
 export const verifyAdmin = (req, res, next) => {
   try {
     const role = req.user.role;
-    // console.log("_----_--", role);
 
     if (role === "user")
       return res
