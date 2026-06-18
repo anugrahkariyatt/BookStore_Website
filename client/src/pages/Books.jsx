@@ -88,16 +88,46 @@ const Books = () => {
 
   return (
     //div container
-    <div className="px-2 py-4 bg-light vh-100">
+    <div
+      className="px-2 py-4  vh-100"
+      style={{
+        backgroundColor: "var(--background-color)",
+        color: "var(--text-primary)",
+      }}
+    >
       {/* left side filter */}
-      <div className="d-lg-none mb-3">
+      {/* left side filter & mobile sort */}
+      <div className="d-lg-none mb-3 d-flex gap-2">
         <button
-          className="btn btn-dark w-100"
+          className="btn btn-dark w-50"
+          style={{ backgroundColor: "var(--primary-color)" }}
           data-bs-toggle="offcanvas"
           data-bs-target="#mobileFilter"
         >
           Filters
         </button>
+
+        <select
+          className="form-select w-50"
+          value={filters.sort}
+          style={{
+            backgroundColor: "var(--surface-color)",
+            borderColor: "var(--border-color)",
+            color: "var(--text-primary)",
+          }}
+          onChange={(e) => {
+            setFilters((prev) => ({
+              ...prev,
+              sort: e.target.value,
+            }));
+          }}
+        >
+          <option value="">Sort: Relevance</option>
+          <option value="price_asc">Price Low To High</option>
+          <option value="price_desc">Price High To Low</option>
+          <option value="newest">Newest</option>
+          <option value="bestselling">Best Selling</option>
+        </select>
       </div>
       <div className="d-flex gap-4 flex-grow-1 align-items-start">
         {" "}
@@ -105,19 +135,21 @@ const Books = () => {
           className="d-none d-lg-flex flex-lg-column"
           style={{ width: "220px", minWidth: "220px" }}
         >
-          <h3 className="fw-bold mb-4">Filter</h3>
-          <button className="btn btn-dark" onClick={fetchBooks}>
-            Apply Filters
-          </button>
+          <h3 className="fw-bold mb-4" style={{ color: "var(--text-primary)" }}>
+            Filter
+          </h3>
+
+         
+
+          {/* Categories Accordion */}
           <div className="accordion-item bg-transparent border-bottom border-top-0 border-start-0 border-end-0 py-2">
             <h2 className="accordion-header" id="headingCategory">
               <button
                 className="accordion-button bg-transparent fw-bold fs-5 p-0 shadow-none"
+                style={{ color: "var(--text-primary)" }}
                 type="button"
                 data-bs-toggle="collapse"
                 data-bs-target="#collapseCategory"
-                aria-expanded="true"
-                aria-controls="collapseCategory"
               >
                 Category
               </button>
@@ -125,8 +157,6 @@ const Books = () => {
             <div
               id="collapseCategory"
               className="accordion-collapse collapse show"
-              aria-labelledby="headingCategory"
-              data-bs-parent="#filterSidebar"
             >
               <div
                 className="accordion-body px-0 pt-3 pb-2 overflow-y-auto"
@@ -135,13 +165,15 @@ const Books = () => {
                 {categories.map((item) => (
                   <div className="form-check mb-2" key={item._id}>
                     <input
-                      className="form-check-input"
+                      className="form-check-input shadow-none"
                       type="checkbox"
                       id={`category-${item._id}`}
                       onChange={() => handleCategoryChange(item._id)}
+                      style={{ borderColor: "var(--border-color)" }}
                     />
                     <label
-                      className="form-check-label text-muted"
+                      className="form-check-label"
+                      style={{ color: "var(--text-secondary)" }}
                       htmlFor={`category-${item._id}`}
                     >
                       {item.name}
@@ -150,6 +182,7 @@ const Books = () => {
                 ))}
               </div>
             </div>
+            
           </div>
 
           <div className="accordion-item bg-transparent border-bottom border-top-0 border-start-0 border-end-0 py-2">
@@ -193,8 +226,15 @@ const Books = () => {
                 ))}
               </div>
             </div>
+            
           </div>
-
+ <button
+            className="btn text-white fw-medium mb-3"
+            style={{ backgroundColor: "var(--primary-color)" }}
+            onClick={fetchBooks}
+          >
+            Apply Filters
+          </button>
           {/* <div className="accordion-item bg-transparent border-0 py-2">
             <h2 className="accordion-header" id="headingPrice">
               <button
@@ -278,7 +318,7 @@ const Books = () => {
                 overflowY: "auto",
               }}
             >
-              <div className="d-flex flex-wrap gap-4">
+              <div className="d-flex flex-wrap gap-4 justify-content-center">
                 <Cards selectedBooks={book} />
               </div>
             </div>

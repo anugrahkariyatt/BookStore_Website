@@ -7,7 +7,6 @@ const Orders = () => {
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   
-  // New state variables to hold the pending update until confirmed
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [pendingStatus, setPendingStatus] = useState("");
 
@@ -23,16 +22,13 @@ const Orders = () => {
     fetchOrders();
   }, []);
 
-  // 1. This function catches the dropdown change and opens the modal
   const handleStatusChangeClick = (id, newStatus) => {
     setSelectedOrderId(id);
     setPendingStatus(newStatus);
     
-    // Trigger the hidden button to open the Bootstrap modal
     document.getElementById("triggerStatusModal").click();
   };
 
-  // 2. This function actually runs the API call when "Yes" is clicked
   const confirmUpdateStatus = async () => {
     try {
       const updatedOrder = await api.patch(`/admin/orders/${selectedOrderId}`, {
@@ -40,7 +36,6 @@ const Orders = () => {
       });
       
       if (updatedOrder) {
-        // Update the UI
         setOrders((prevOrders) =>
           prevOrders.map((order) =>
             order._id === selectedOrderId ? { ...order, status: pendingStatus } : order
@@ -161,7 +156,6 @@ const Orders = () => {
             
             <div className="modal-body text-center pt-0 pb-4 px-4">
               
-              {/* Blue Info Icon for Update Actions */}
               <div 
                 className="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 rounded-circle mb-3"
                 style={{ width: "80px", height: "80px" }}

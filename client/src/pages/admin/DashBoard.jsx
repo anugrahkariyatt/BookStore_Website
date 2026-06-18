@@ -40,11 +40,9 @@ const Dashboard = () => {
       <div className="row mb-4">
         <div className="col-lg-5">
           {" "}
-          {/* Donut charts usually look best in smaller containers */}
           <div className="card shadow-sm border-0 p-3">
             <h5 className="text-muted mb-3">Platform Overview</h5>
             <div style={{ height: "300px" }}>
-              {/* 3. Use the Doughnut component */}
               <Doughnut
                 data={chartData}
                 options={{ maintainAspectRatio: false, responsive: true }}

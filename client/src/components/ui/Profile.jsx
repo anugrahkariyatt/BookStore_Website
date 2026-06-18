@@ -1,23 +1,28 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
+import { successToast, errorToast } from "../../utils/Toast";
 
 const Profile = () => {
   const [user, setUser] = useState(null);
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    currentPassword: "",
     password: "",
     confirmPassword: "",
   });
+
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isPasswordVerified, setIsPasswordVerified] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const res = await api.get("/profile");
-
         setUser(res.data.user);
-
         setFormData((prev) => ({
           ...prev,
           name: res.data.user.name,
@@ -38,123 +43,241 @@ const Profile = () => {
     });
   };
 
-  const handleSubmit = async (e) => {
+  const handleProfileSubmit = async (e) => {
     e.preventDefault();
+    try {
+   
+      await api.put("/profile/update", {
+        name: formData.name,
+        email: formData.email,
+      });
+      successToast("Profile updated successfully!");
+    } catch (error) {
+      errorToast("Failed to update profile");
+      console.log(error);
+    }
+  };
 
-    if (formData.password && formData.password !== formData.confirmPassword) {
-      return alert("Passwords do not match");
+  const handleVerifyPassword = async () => {
+    if (!formData.currentPassword)
+      return errorToast("Please enter current password");
+
+    setIsVerifying(true);
+    try {
+      await api.post("/profile/verify-password", {
+        currentPassword: formData.currentPassword,
+      });
+      setTimeout(() => {
+        setIsPasswordVerified(true);
+        successToast("Password verified! You can now set a new one.");
+        setIsVerifying(false);
+      }, 1000);
+    } catch (error) {
+      errorToast(error.response?.data?.error || "Incorrect current password");
+      setIsVerifying(false);
+    }
+  };
+
+  const handleUpdatePassword = async () => {
+    if (formData.password !== formData.confirmPassword) {
+      return errorToast("New passwords do not match");
     }
 
-    console.log(formData);
+    try {
+      
+      await api.put("/profile/update-password", {
+        newPassword: formData.password,
+      });
+      successToast("Password changed successfully!");
 
-    // update profile api here
+      setFormData((prev) => ({
+        ...prev,
+        currentPassword: "",
+        password: "",
+        confirmPassword: "",
+      }));
+      setIsPasswordVerified(false);
+    } catch (error) {
+      errorToast(error.response?.data?.error || "Failed to update password");
+    }
   };
 
   if (!user) {
     return (
-      <div className="container py-5 text-center vh-100">
-        <h4>Loading Profile...</h4>
+      <div className="container py-5 text-center vh-100 d-flex justify-content-center align-items-center">
+        <div className="spinner-border text-dark" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container py-4">
-      <div className="row justify-content-center">
-        <div className="col-lg-8 col-md-10">
-          <div className="card border-0 shadow-sm">
-            <div className="card-body p-4 p-md-5">
-              <div className="text-center mb-4">
-                <img
-                  src="https://ui-avatars.com/api/?name="
-                  alt="profile"
-                  className="rounded-circle border"
-                  style={{
-                    width: "120px",
-                    height: "120px",
-                  }}
-                />
+    <div className="container py-5" style={{ minHeight: "calc(100vh - 80px)" }}>
+      <h3 className="fw-bold mb-4">My Account</h3>
 
-                <h3 className="mt-3 mb-1">{user.name}</h3>
+      <div className="row g-4">
+        <div className="col-12 col-lg-4">
+          <div className="card border-0 shadow-sm rounded-4 text-center p-4 h-100">
+            <div className="card-body">
+              <img
+                src={`https://ui-avatars.com/api/?name=${user.name}&background=random&color=fff&size=120`}
+                alt="profile"
+                className="rounded-circle shadow-sm mb-3"
+              />
+              <h4 className="fw-bold mb-1">{user.name}</h4>
+              <p className="text-muted mb-3">{user.email}</p>
 
-                <p className="text-muted mb-1">{user.email}</p>
+              
 
-                <span className=" text-black">{user.role}</span>
+              <hr className="text-muted" />
+
+              <div className="d-grid gap-2 mt-4">
+                {user.role === "admin" ? (
+                  <button
+                    className="btn btn-outline-dark fw-medium"
+                    onClick={() => navigate("/dashboard")}
+                  >
+                    Admin Dashboard
+                  </button>
+                ) : (
+                  <button
+                    className="btn btn-dark fw-medium"
+                    onClick={() => navigate("/orders")}
+                  >
+                    View My Orders
+                  </button>
+                )}
               </div>
+            </div>
+          </div>
+        </div>
 
-              <hr />
+        <div className="col-12 col-lg-8">
+          <div className="card border-0 shadow-sm rounded-4 p-4 mb-4">
+            <div className="card-body">
+              <h5 className="fw-bold mb-4">Profile Settings</h5>
 
-              <form onSubmit={handleSubmit}>
-                <h5 className="mb-3">Personal Information</h5>
+              <form onSubmit={handleProfileSubmit}>
+                <div className="row g-3 mb-4">
+                  <div className="col-md-6">
+                    <label className="form-label text-muted small text-uppercase fw-bold">
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      className="form-control form-control-lg bg-light border-0 shadow-none"
+                      value={formData.name}
+                      onChange={handleChange}
+                    />
+                  </div>
 
-                <div className="mb-3">
-                  <label className="form-label">Full Name</label>
-
-                  <input
-                    type="text"
-                    name="name"
-                    className="form-control"
-                    value={formData.name}
-                    onChange={handleChange}
-                  />
+                  <div className="col-md-6">
+                    <label className="form-label text-muted small text-uppercase fw-bold">
+                      Email Address
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      className="form-control form-control-lg bg-light border-0 shadow-none"
+                      value={formData.email}
+                      onChange={handleChange}
+                    />
+                  </div>
                 </div>
 
-                <div className="mb-4">
-                  <label className="form-label">Email Address</label>
-
-                  <input
-                    type="email"
-                    name="email"
-                    className="form-control"
-                    value={formData.email}
-                    onChange={handleChange}
-                  />
-                </div>
-
-                <h5 className="mb-3">Change Password</h5>
-
-                <div className="mb-3">
-                  <label className="form-label">New Password</label>
-
-                  <input
-                    type="password"
-                    name="password"
-                    className="form-control"
-                    value={formData.password}
-                    onChange={handleChange}
-                  />
-                </div>
-
-                <div className="mb-4">
-                  <label className="form-label">Confirm Password</label>
-
-                  <input
-                    type="password"
-                    name="confirmPassword"
-                    className="form-control"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                  />
-                </div>
-
-                <div className="d-grid">
-                  <button type="submit" className="btn btn-dark">
-                    Save Changes
+                <div className="d-flex justify-content-end">
+                  <button type="submit" className="btn btn-dark px-4 fw-bold">
+                    Save Profile
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
 
-              {user.role === "admin" && (
-                <div className="mt-4">
-                  <hr />
+          <div className="card border-0 shadow-sm rounded-4 p-4">
+            <div className="card-body">
+              <h5 className="fw-bold mb-4">Security Settings</h5>
 
-                  <h5>Admin Access</h5>
+              <div className="row g-4">
+                <div className="col-md-5 border-end d-flex flex-column">
+                  <label className="form-label text-muted small text-uppercase fw-bold">
+                    Current Password
+                  </label>
+                  <input
+                    type="password"
+                    name="currentPassword"
+                    className="form-control form-control-lg bg-light border-0 shadow-none mb-3"
+                    value={formData.currentPassword}
+                    onChange={handleChange}
+                    placeholder="Enter current password"
+                    disabled={isPasswordVerified}
+                  />
 
-                  <button className="btn btn-outline-dark">
-                    Go To Dashboard
+                  <button
+                    type="button"
+                    className={`btn fw-bold mt-auto ${isPasswordVerified ? "btn-success" : "btn-outline-dark"}`}
+                    onClick={handleVerifyPassword}
+                    disabled={
+                      isPasswordVerified ||
+                      isVerifying ||
+                      !formData.currentPassword
+                    }
+                  >
+                    {isPasswordVerified
+                      ? "Verified ✓"
+                      : isVerifying
+                        ? "Verifying..."
+                        : "Verify Password"}
                   </button>
                 </div>
-              )}
+
+                <div className="col-md-7">
+                  <div className="mb-3">
+                    <label className="form-label text-muted small text-uppercase fw-bold">
+                      New Password
+                    </label>
+                    <input
+                      type="password"
+                      name="password"
+                      className="form-control form-control-lg bg-light border-0 shadow-none"
+                      value={formData.password}
+                      onChange={handleChange}
+                      placeholder="••••••••"
+                      disabled={!isPasswordVerified}
+                    />
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="form-label text-muted small text-uppercase fw-bold">
+                      Confirm New Password
+                    </label>
+                    <input
+                      type="password"
+                      name="confirmPassword"
+                      className="form-control form-control-lg bg-light border-0 shadow-none"
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      placeholder="••••••••"
+                      disabled={!isPasswordVerified}
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    className="btn btn-dark w-100 fw-bold"
+                    onClick={handleUpdatePassword}
+                    disabled={
+                      !isPasswordVerified ||
+                      !formData.password ||
+                      !formData.confirmPassword
+                    }
+                  >
+                    Update Password
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

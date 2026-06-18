@@ -15,8 +15,7 @@ const AdminLayout = () => {
   };
 
   return (
-    <div className="d-flex">
-      {/* Backdrop */}
+    <div className="d-flex vh-100 overflow-hidden">
       {isSideBarOpen && (
         <div
           className="d-lg-none"
@@ -35,7 +34,7 @@ const AdminLayout = () => {
         closeSidebar={closeSidebar}
       />
 
-      <div className="flex-grow-1">
+      <div className="flex-grow-1 overflow-auto">
         <Navbar toggleSidebar={toggleSidebar} />
 
         <div className="p-4">

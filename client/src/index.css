@@ -37,6 +37,8 @@
    GLOBAL
 ========================= */
 
+
+
 html,
 body {
   margin: 0;
@@ -334,6 +336,8 @@ h3 {
 .form-select {
   border-radius: 8px;
 }
+
+
 
 @media (max-width: 992px) {
   .order-summary-card {

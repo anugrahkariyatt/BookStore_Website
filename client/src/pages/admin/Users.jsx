@@ -4,7 +4,7 @@ import { errorToast, successToast } from "../../utils/Toast";
 
 const Users = () => {
   const [users, setUsers] = useState([]);
-  const [selectedUser, setSelectedUser] = useState(null); // Tracks the user being acted upon
+  const [selectedUser, setSelectedUser] = useState(null); 
 
   useEffect(() => {
     fetchUsers();

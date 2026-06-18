@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import api from "../../api/axios"; // Fixed import path based on your previous files
+import api from "../../api/axios"; 
 
 const OrderDetails = () => {
   const { id } = useParams();
@@ -95,7 +95,6 @@ const OrderDetails = () => {
             <div className="col-lg-6">
               <h5 className="fw-bold mb-3">Shipping Address</h5>
               <div className="border rounded p-3 bg-light">
-                {/* ADDED: Fallback in case shippingAddress is just a string instead of an object */}
                 {typeof order.shippingAddress === "string" ? (
                   <p className="mb-0">{order.shippingAddress}</p>
                 ) : (
@@ -155,7 +154,6 @@ const OrderDetails = () => {
             {order.items?.map((item, index) => (
               <div key={item._id || index} className="col-md-6 col-lg-4">
                 <div className="d-flex gap-3 align-items-center border rounded p-3 h-100 shadow-sm transition-hover">
-                  {/* ADDED: Fallback image in case the image URL is broken or missing */}
                   <img
                     src={
                       item.image ||
@@ -173,7 +171,6 @@ const OrderDetails = () => {
                   />
 
                   <div className="flex-grow-1">
-                    {/* ADDED: Fallbacks to item.book in case your data is populated via reference */}
                     <h6
                       className="fw-bold text-truncate"
                       style={{ maxWidth: "200px" }}

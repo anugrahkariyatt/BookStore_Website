@@ -1,4 +1,3 @@
-import React from "react";
 import { Link } from "react-router-dom";
 
 const About = () => {
@@ -6,24 +5,37 @@ const About = () => {
     <section className="container py-5">
       <div className="row align-items-center">
         <div className="col-lg-6">
-          <h2 className="fw-bold mb-4">About Us</h2>
+          <h2
+            className="fw-bold mb-4"
+            style={{ color: "var(--primary-color)" }}
+          >
+            About Us
+          </h2>
 
-          <p className="text-secondary">
-            Welcome to BookVerse, your destination for discovering stories,
+          <p style={{ color: "var(--text-secondary)" }}>
+            Welcome to Bookloom, your destination for discovering stories,
             knowledge, and inspiration. We offer a carefully curated collection
             of bestselling novels, academic resources, self-development books,
             children's literature, and much more.
           </p>
 
-          <p className="text-secondary">
+          <p style={{ color: "var(--text-secondary)" }}>
             Our mission is to make reading accessible to everyone by providing
             quality books at affordable prices. Whether you're a passionate
             reader, a student, or someone exploring a new hobby, we have
             something for you.
           </p>
 
-          <Link to={"/books"}
-           className="btn btn-warning px-4 py-2">Explore Books</Link>
+          <Link
+            to={"/books"}
+            className="btn px-4 py-2"
+            style={{
+              backgroundColor: "var(--primary-color)",
+              color: "#ffffff",
+            }}
+          >
+            Explore Books
+          </Link>
         </div>
 
         <div className="col-lg-6 text-center mt-4 mt-lg-0">

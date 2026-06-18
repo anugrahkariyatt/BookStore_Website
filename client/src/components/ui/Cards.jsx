@@ -27,15 +27,16 @@ const Cards = ({ selectedBooks }) => {
     }
   };
 
+
   return selectedBooks?.map((book) => {
     const isWishlisted = wishlistItems.some((item) => item._id === book._id);
 
     return (
       <div
         key={book._id}
-        className="card book-card flex-shrink-0 justify-content-center position-relative"
+        className="card book-card position-relative h-100 flex-shrink-0"
         style={{
-          width: "clamp(180px, 22vw, 250px)",
+          width: "200px",
         }}
         onClick={() => navigate(`/product/${book._id}`)}
       >
@@ -59,22 +60,33 @@ const Cards = ({ selectedBooks }) => {
         >
           <i className={isWishlisted ? "bi bi-heart-fill" : "bi bi-heart"}></i>
         </button>
-        <div className="book-image-wrapper">
-          <img src={book.image} className="book-image" alt="book" />
+
+        <div
+          className="book-image-wrapper w-100"
+          style={{ height: "220px", overflow: "hidden" }}
+        >
+          <img
+            src={book.image}
+            className="book-image w-100 h-100"
+            style={{ objectFit: "contain", backgroundColor: "#f8f9fa" }}
+            alt="book"
+          />
         </div>
-        <div className="card-body">
+
+        <div className="card-body d-flex flex-column">
           <h5 className="card-title text-truncate">{book.title}</h5>
-          <p className="card-text mb-1">{book.author}</p>
-          <p className="card-text fw-bold">${book.price}</p>
+          <p className="card-text mb-1 text-truncate">{book.author}</p>
+          <p className="card-text fw-bold">₹{book.price}</p>
+
           <button
-            className="btn w-100 addToCartbtn"
+            className="btn w-100 addToCartbtn mt-auto"
             onClick={(e) => {
               e.stopPropagation();
               addToCart(book._id);
             }}
           >
             Add to Cart
-          </button>{" "}
+          </button>
         </div>
       </div>
     );
