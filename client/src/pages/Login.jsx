@@ -1,15 +1,24 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { object, string, minLength, email, safeParse, pipe } from "valibot";
+import {
+  object,
+  trim,
+  string,
+  minLength,
+  email,
+  safeParse,
+  pipe,
+} from "valibot";
 
 import { loginUser } from "../redux/auth/authThunk";
 
 const loginSchema = pipe(
   object({
-    email: pipe(string(), email("Invalid email address")),
+    email: pipe(string(), trim(), email("Invalid email address")),
     password: pipe(
       string(),
+      trim(),
       minLength(6, "Password must be at least 6 characters"),
     ),
   }),
@@ -40,8 +49,11 @@ const Login = () => {
       ...prev,
       [e.target.name]: e.target.value,
     }));
-  };
 
+    if (errors[e.target.name]) {
+      setErrors({ ...errors, [e.target.name]: null });
+    }
+  };
   const handleSubmit = async (e) => {
     e.preventDefault();
 

@@ -7,9 +7,8 @@ const Books = () => {
   const [authors, setAuthors] = useState(null);
   const [categories, setCategories] = useState([]);
   const [searchParams] = useSearchParams();
-
+  const [isLoading, setIsLoading] = useState(true);
   const search = searchParams.get("search") || "";
-  console.log("Search", search);
 
   const [filters, setFilters] = useState({
     categories: [],
@@ -23,24 +22,28 @@ const Books = () => {
     setCategories(res.data.Categories);
     const author = await api.get("/books/authors");
     setAuthors(author.data.authors);
-    console.log("Category data>>>>>>>>>>>", categories);
-    console.log("author data>>>>>>>>>>>>>>>>>>", author.data.authors);
   };
 
   const fetchBooks = async () => {
-    const res = await api.get("/books/filter", {
-      params: {
-        categories: filters.categories.join(","),
-        authors: filters.authors.join(","),
-        minPrice: filters.minPrice,
-        maxPrice: filters.maxPrice,
-        search,
-        sort: filters.sort,
-      },
-    });
+    setIsLoading(true);
+    try {
+      const res = await api.get("/books/filter", {
+        params: {
+          categories: filters.categories.join(","),
+          authors: filters.authors.join(","),
+          minPrice: filters.minPrice,
+          maxPrice: filters.maxPrice,
+          search,
+          sort: filters.sort,
+        },
+      });
 
-    setBook(res.data.books);
-    console.log(res.data.books);
+      setBook(res.data.books);
+    } catch (error) {
+      console.error("Failed to fetch books", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleCategoryChange = (category) => {
@@ -68,13 +71,20 @@ const Books = () => {
   };
   useEffect(() => {
     const fetchBook = async () => {
-      const res = await api.get(`/books/all`);
-      setBook(res.data.books);
+      setIsLoading(true);
+      try {
+        const res = await api.get(`/books/all`);
+        setBook(res.data.books);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     fetchBook();
     fetchCategoryandAuthor();
-  }, [filters]);
+  }, []);
 
   useEffect(() => {
     fetchBooks();
@@ -84,7 +94,7 @@ const Books = () => {
     fetchBooks();
   }, [search]);
 
-  if (!book)
+  if (!book && isLoading) {
     return (
       <div className="container py-5 text-center vh-100 d-flex justify-content-center align-items-center">
         <div className="spinner-border text-dark" role="status">
@@ -92,6 +102,7 @@ const Books = () => {
         </div>
       </div>
     );
+  }
 
   return (
     //div container
@@ -290,41 +301,47 @@ const Books = () => {
             </div>
           </div> */}
         </div>
-        <div className="d-flex gap-4  flex-flex-grow-1   align-items-start ">
-          <div className="flex-grow-1">
-            <div className="d-none d-lg-flex justify-content-between align-items-center mb-4">
-              <button className="btn btn-light px-4 py-2">Books</button>
+        <div className="flex-grow-1 w-100" style={{ minWidth: 0 }}>
+          <div className="d-none d-lg-flex justify-content-between align-items-center mb-4 w-100">
+            <button className="btn btn-light px-4 py-2">Books</button>
 
-              <select
-                className="form-select"
-                style={{ width: "250px" }}
-                value={filters.sort}
-                onChange={(e) => {
-                  setFilters((prev) => ({
-                    ...prev,
-                    sort: e.target.value,
-                  }));
-                }}
-              >
-                <option value="">Relevance</option>
-                <option value="price_asc">Price Low To High</option>
-                <option value="price_desc">Price High To Low</option>
-                <option value="newest">Newest</option>
-                <option value="bestselling">Best Selling</option>
-              </select>
-            </div>
-
-            {/* Scrollable Cards */}
-            <div
-              style={{
-                height: "calc(100vh - 120px)",
-                overflowY: "auto",
+            <select
+              className="form-select"
+              style={{ width: "250px" }}
+              value={filters.sort}
+              onChange={(e) => {
+                setFilters((prev) => ({
+                  ...prev,
+                  sort: e.target.value,
+                }));
               }}
             >
-              <div className="d-flex flex-wrap gap-4 justify-content-center">
+              <option value="">Relevance</option>
+              <option value="price_asc">Price Low To High</option>
+              <option value="price_desc">Price High To Low</option>
+              <option value="newest">Newest</option>
+              <option value="bestselling">Best Selling</option>
+            </select>
+          </div>
+
+          <div
+            style={{
+              height: "calc(100vh - 120px)",
+              overflowY: "auto",
+            }}
+          >
+            {isLoading ? (
+              <div className="container py-5 text-center d-flex justify-content-center align-items-center h-100">
+                <div className="spinner-border text-dark" role="status">
+                  <span className="visually-hidden">Loading...</span>
+                </div>
+              </div>
+            ) : (
+            
+              <div className="d-flex flex-wrap gap-4 justify-content-center justify-content-md-start">
                 <Cards selectedBooks={book} />
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

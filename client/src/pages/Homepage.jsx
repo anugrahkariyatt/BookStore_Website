@@ -11,15 +11,12 @@ const Homepage = () => {
   const [topSellingBooks, setTopSellingBooks] = useState([]);
   const [newBooks, setNewBooks] = useState([]);
   const { isAuthenticated, user } = useSelector((state) => state.auth);
-  console.log("User>>>------>>>>>>>>", user, "Autheticated", isAuthenticated);
   useEffect(() => {
     const fetchBooks = async () => {
       try {
-        console.log("Fetching is working");
 
         const sortBySoldBook = await api.get("/books/book-by-sold");
         const sortByNewBook = await api.get("/books/book-by-new");
-        // console.log("Books sold", sortBySoldBook.data.books);
         setNewBooks(sortByNewBook.data.books);
         setTopSellingBooks(sortBySoldBook.data.books);
         console.log("SE", topSellingBooks);

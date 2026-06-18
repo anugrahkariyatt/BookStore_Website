@@ -33,7 +33,6 @@ const authSlice = createSlice({
         state.loading = false;
         state.user = action.payload.user;
         state.isAuthenticated = true;
-                console.log(action, "--------->>");
 
       })
 

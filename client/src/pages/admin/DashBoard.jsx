@@ -31,7 +31,7 @@ const Dashboard = () => {
           responseData?.totalUsers || 0,
           responseData?.totalRevenue || 0, 
         ],
-        backgroundColor: ["#4e73df", "#1cc88a", "#36b9cc", "#f6c23e"], // Added Gold for Revenue
+        backgroundColor: ["#4e73df", "#1cc88a", "#36b9cc", "#f6c23e"],  
       },
     ],
   };

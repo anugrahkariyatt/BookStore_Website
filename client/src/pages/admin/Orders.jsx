@@ -49,7 +49,6 @@ const Orders = () => {
       console.error("Error updating status:", error);
       errorToast("Something went wrong while updating status");
     } finally {
-      // Clear the temporary state
       setSelectedOrderId(null);
       setPendingStatus("");
     }

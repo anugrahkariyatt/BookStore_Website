@@ -8,18 +8,32 @@ import {
   number,
   safeParse,
   pipe,
-  title,
+  trim,
+  minValue,
 } from "valibot";
 
-const bookSchema = pipe(
-  object({
-    title: pipe(string(), minLength(1, "Title must be atlest 1 Characters")),
-    author: pipe(string(), minLength(2, "Name must be at atlest 2 Characters")),
-    price: pipe(number()),
-    stock: pipe(number()),
-    category: pipe(string(),)
-  }),
-);
+const bookSchema = object({
+  title: pipe(string(), trim(), minLength(1, "Title is required")),
+  author: pipe(
+    string(),
+    trim(),
+    minLength(2, "Author must be at least 2 characters"),
+  ),
+  price: pipe(
+    number("Price is required and must be a number"),
+    minValue(1, "Price must be at least 1"),
+  ),
+  stock: pipe(
+    number("Stock is required and must be a number"),
+    minValue(0, "Stock cannot be negative"),
+  ),
+  category: pipe(string(), minLength(1, "Please select a category")),
+  description: pipe(
+    string(),
+    trim(),
+    minLength(10, "Description must be at least 10 characters"),
+  ),
+});
 
 const Books = () => {
   const [books, setBooks] = useState([]);
@@ -28,17 +42,20 @@ const Books = () => {
   const [selectedBook, setSelectedBook] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+
+  const [errors, setErrors] = useState({});
   const [form, setForm] = useState({
     title: "",
     author: "",
     price: "",
     stock: "",
     category: "",
-    coverImage: "null",
+    coverImage: null,
     description: "",
   });
 
   const createBook = async () => {
+    if (!validateForm()) return;
     try {
       const formData = new FormData();
 
@@ -66,6 +83,7 @@ const Books = () => {
       // close modal
     } catch (error) {
       console.error(error);
+      errorToast("Failed to add book");
     }
   };
   const fetchCategories = async () => {
@@ -107,22 +125,59 @@ const Books = () => {
       console.error("Error deleting book:", error);
     }
   };
+ const validateForm = () => {
+    const validationData = {
+      ...form,
+      price: form.price === "" ? undefined : Number(form.price),
+      stock: form.stock === "" ? undefined : Number(form.stock),
+    };
 
+    const result = safeParse(bookSchema, validationData);
+    
+    const fieldErrors = {};
+    let isValid = true;
+
+    if (!result.success) {
+      isValid = false;
+      result.issues.forEach((issue) => {
+        const fieldName = issue.path?.[0]?.key;
+        if (fieldName && !fieldErrors[fieldName]) {
+          fieldErrors[fieldName] = issue.message;
+        }
+      });
+    }
+
+    if (!isEditMode && !form.coverImage) {
+      fieldErrors.coverImage = "Please select a cover image";
+      isValid = false;
+    }
+
+    setErrors(fieldErrors);
+    return isValid;
+  };
+
+  const handleInputChange = (field, value) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: null }));
+    }
+  };
   const handleEdit = (book) => {
     setSelectedBook(book);
-
+    setErrors({});
     setForm({
       title: book.title || "",
       author: book.author || "",
       price: book.price || "",
       stock: book.stock || "",
       category: book.category?._id || "",
-      image: book.image || "",
+      coverImage: null,
       description: book.description || "",
     });
   };
 
   const updateBook = async () => {
+    if (!validateForm()) return;
     try {
       const formData = new FormData();
 
@@ -137,7 +192,6 @@ const Books = () => {
         formData.append("coverImage", form.coverImage);
       }
       const res = await api.patch(`/books/${selectedBook._id}`, formData);
-      console.log("Res", res.data);
 
       setBooks((prev) =>
         prev.map((book) =>
@@ -176,14 +230,14 @@ const Books = () => {
           data-bs-target="#editBookModal"
           onClick={() => {
             setIsEditMode(false);
-
+            setErrors({});
             setForm({
               title: "",
               author: "",
               price: "",
               stock: "",
               category: "",
-              image: "",
+              coverImage: null,
               description: "",
             });
           }}
@@ -315,7 +369,6 @@ const Books = () => {
         className="modal fade"
         id="editBookModal"
         tabIndex="-1"
-        aria-labelledby="editBookModalLabel"
         aria-hidden="true"
       >
         <div className="modal-dialog modal-lg">
@@ -324,7 +377,6 @@ const Books = () => {
               <h5 className="modal-title">
                 {isEditMode ? "Edit Book" : "Add Book"}
               </h5>
-
               <button
                 type="button"
                 className="btn-close"
@@ -332,106 +384,120 @@ const Books = () => {
                 onClick={() => setSelectedBook(null)}
               />
             </div>
-
             <div className="modal-body">
               <div className="d-flex flex-column gap-3">
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Title"
-                  value={form.title}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      title: e.target.value,
-                    })
-                  }
-                />
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Author"
-                  value={form.author}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      author: e.target.value,
-                    })
-                  }
-                />
+                {/* 6. Form Inputs with Error states */}
+                <div>
+                  <input
+                    type="text"
+                    className={`form-control ${errors.title ? "is-invalid" : ""}`}
+                    placeholder="Title"
+                    value={form.title}
+                    onChange={(e) => handleInputChange("title", e.target.value)}
+                  />
+                  {errors.title && (
+                    <div className="invalid-feedback">{errors.title}</div>
+                  )}
+                </div>
 
-                <input
-                  type="number"
-                  className="form-control"
-                  placeholder="Stock"
-                  value={form.stock}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      stock: e.target.value,
-                    })
-                  }
-                />
+                <div>
+                  <input
+                    type="text"
+                    className={`form-control ${errors.author ? "is-invalid" : ""}`}
+                    placeholder="Author"
+                    value={form.author}
+                    onChange={(e) =>
+                      handleInputChange("author", e.target.value)
+                    }
+                  />
+                  {errors.author && (
+                    <div className="invalid-feedback">{errors.author}</div>
+                  )}
+                </div>
 
-                <input
-                  type="number"
-                  className="form-control"
-                  placeholder="Price"
-                  value={form.price}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      price: e.target.value,
-                    })
-                  }
-                />
-                <select
-                  className="form-select"
-                  value={form.category}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      category: e.target.value,
-                    })
-                  }
-                >
-                  <option value="">Select Category</option>
+                <div>
+                  <input
+                    type="number"
+                    className={`form-control ${errors.stock ? "is-invalid" : ""}`}
+                    placeholder="Stock"
+                    value={form.stock}
+                    onChange={(e) => handleInputChange("stock", e.target.value)}
+                  />
+                  {errors.stock && (
+                    <div className="invalid-feedback">{errors.stock}</div>
+                  )}
+                </div>
 
-                  {categories.map((category) => (
-                    <option key={category._id} value={category._id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
+                <div>
+                  <input
+                    type="number"
+                    className={`form-control ${errors.price ? "is-invalid" : ""}`}
+                    placeholder="Price (₹)"
+                    value={form.price}
+                    onChange={(e) => handleInputChange("price", e.target.value)}
+                  />
+                  {errors.price && (
+                    <div className="invalid-feedback">{errors.price}</div>
+                  )}
+                </div>
 
-                <input
-                  type="file"
-                  className="form-control"
-                  accept="image/*"
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      coverImage: e.target.files[0],
-                    })
-                  }
-                />
+                <div>
+                  <select
+                    className={`form-select ${errors.category ? "is-invalid" : ""}`}
+                    value={form.category}
+                    onChange={(e) =>
+                      handleInputChange("category", e.target.value)
+                    }
+                  >
+                    <option value="">Select Category</option>
+                    {categories.map((category) => (
+                      <option key={category._id} value={category._id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.category && (
+                    <div className="invalid-feedback">{errors.category}</div>
+                  )}
+                </div>
 
-                <textarea
-                  rows="4"
-                  className="form-control"
-                  placeholder="Description"
-                  value={form.description}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      description: e.target.value,
-                    })
-                  }
-                />
+                <div>
+                  <input
+                    type="file"
+                    className={`form-control ${errors.coverImage ? "is-invalid" : ""}`}
+                    accept="image/*"
+                    onChange={(e) =>
+                      handleInputChange("coverImage", e.target.files[0])
+                    }
+                  />
+                  {errors.coverImage ? (
+                    <div className="invalid-feedback">{errors.coverImage}</div>
+                  ) : (
+                    <small className="text-muted">
+                      {isEditMode
+                        ? "Leave blank to keep existing image."
+                        : "Cover image is required."}
+                    </small>
+                  )}
+                </div>
+
+                <div>
+                  <textarea
+                    rows="4"
+                    className={`form-control ${errors.description ? "is-invalid" : ""}`}
+                    placeholder="Description"
+                    value={form.description}
+                    onChange={(e) =>
+                      handleInputChange("description", e.target.value)
+                    }
+                  />
+                  {errors.description && (
+                    <div className="invalid-feedback">{errors.description}</div>
+                  )}
+                </div>
 
                 <button
-                  className="btn btn-primary"
-                  data-bs-dismiss="modal"
+                  className="btn btn-primary mt-2"
                   onClick={isEditMode ? updateBook : createBook}
                 >
                   {isEditMode ? "Update Book" : "Add Book"}
@@ -442,7 +508,7 @@ const Books = () => {
         </div>
       </div>
 
-      {/* Delete Book Confirmation Modal */}
+      {/* Delete Confirmation Modal (Unchanged) */}
       <div
         className="modal fade"
         id="deleteModal"
@@ -462,7 +528,6 @@ const Books = () => {
                 aria-label="Close"
               ></button>
             </div>
-
             <div className="modal-body text-center pt-0 pb-4 px-4">
               <div
                 className="d-inline-flex align-items-center justify-content-center bg-danger bg-opacity-10 rounded-circle mb-3"
@@ -473,16 +538,13 @@ const Books = () => {
                   style={{ fontSize: "2.5rem" }}
                 ></i>
               </div>
-
               <h4 className="fw-bold mb-3">Delete Book?</h4>
-
               <p className="text-muted mb-4 fs-5">
                 Are you sure you want to delete the book <br />
                 <strong className="text-dark">"{selectedBook?.title}"</strong>?
                 <br />
                 This action is permanent and cannot be undone.
               </p>
-
               <div className="d-flex justify-content-center gap-3 mt-2 px-4">
                 <button
                   type="button"
@@ -491,7 +553,6 @@ const Books = () => {
                 >
                   Cancel
                 </button>
-
                 <button
                   type="button"
                   className="btn btn-danger py-2 fw-semibold w-50 shadow-sm"

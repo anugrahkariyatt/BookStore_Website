@@ -15,7 +15,6 @@ const Wishlist = () => {
   const addToCart = async (id) => {
     try {
       const res = await api.post(`/cart/${id}`, { stock: 1 });
-      console.log("Res", res);
       if (res) {
         dispatch(removeFromWishList(id));
       }

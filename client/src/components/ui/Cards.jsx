@@ -15,7 +15,6 @@ const Cards = ({ selectedBooks }) => {
   const addToCart = async (id) => {
     try {
       const res = await api.post(`/cart/${id}`, { stock: 1 });
-      console.log("Res", res);
       if (res.status === 201) {
         successToast("Added to cart");
         dispatch(fetchCart());

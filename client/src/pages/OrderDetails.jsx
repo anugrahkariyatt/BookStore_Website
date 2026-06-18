@@ -4,7 +4,6 @@ import api from "../api/axios";
 
 const OrderDetails = () => {
   const { id } = useParams();
-  console.log("IDDDDDDD", id);
 
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);

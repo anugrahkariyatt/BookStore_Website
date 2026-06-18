@@ -65,7 +65,6 @@ const Checkout = () => {
       setShowModal(false);
     }
   };
-  // Trigger modal only after validation
   const initiateCheckout = () => {
     const { name, phone, addressLine1, city, state, pincode } = formData;
 

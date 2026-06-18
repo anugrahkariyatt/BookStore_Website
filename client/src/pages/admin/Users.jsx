@@ -28,7 +28,7 @@ const Users = () => {
       
       await api.patch(endpoint);
       successToast(`Successfully ${isBlocking ? "Blocked" : "Unblocked"} the user`);
-      fetchUsers(); // Refresh list
+      fetchUsers(); 
       setSelectedUser(null);
     } catch (error) {
       errorToast("Action failed");

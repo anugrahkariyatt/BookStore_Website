@@ -9,38 +9,48 @@ import {
   forward,
   check,
   pipe,
+  trim,
+  regex,
 } from "valibot";
 import api from "../api/axios";
-
+import { successToast, errorToast } from "../utils/Toast";
 const signupSchema = pipe(
   object({
-    name: pipe(string(), minLength(3, "Name must be at least 3 characters")),
+    name: pipe(
+      string(),
+      trim(),
+      minLength(3, "Name must be at least 3 characters"),
+    ),
 
-    email: pipe(string(), email("Invalid email address")),
+    email: pipe(string(), trim(), email("Invalid email address")),
 
     password: pipe(
       string(),
-      minLength(6, "Password must be at least 6 characters"),
+      trim(),
+      minLength(8, "Password must be at least 8 characters"),
+      regex(/[A-Z]/, "Must contain at least one uppercase letter"),
+      regex(/[0-9]/, "Must contain at least one number"),
+      regex(/[^A-Za-z0-9]/, "Must contain at least one special character"),
     ),
 
     confirmPassword: pipe(
       string(),
-      minLength(6, "Password must be at least 6 characters"),
+      trim(),
+      minLength(8, "Please confirm your password"),
     ),
   }),
-
   forward(
     check(
       (input) => input.password === input.confirmPassword,
-
       "Passwords do not match",
     ),
-
     ["confirmPassword"],
   ),
 );
 
 const Signup = () => {
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -53,7 +63,11 @@ const Signup = () => {
       ...formData,
       [e.target.name]: e.target.value,
     });
+    if (errors[e.target.name]) {
+      setErrors({ ...errors, [e.target.name]: null });
+    }
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -75,17 +89,19 @@ const Signup = () => {
       return;
     }
     setErrors({});
-
-    // console.log("VALID DATA:", formData);
+    setIsLoading(true);
     try {
       await api.post("/signup", formData);
-      navigate("/home");
+      successToast("Account created successfully! Please login.");
+      navigate("/");
     } catch (err) {
-      console.log("Signup failed", err.message);
+      errorToast(
+        err.response?.data?.error || "Signup failed. Please try again.",
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
-
-  const navigate = useNavigate();
 
   return (
     <div className="vh-100 d-flex justify-content-center align-items-center">
@@ -165,6 +181,7 @@ const Signup = () => {
             type="button"
             className="btn btn-dark w-100"
             onClick={() => navigate("/")}
+            disabled={isLoading}
           >
             Login
           </button>

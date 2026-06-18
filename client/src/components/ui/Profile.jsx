@@ -9,6 +9,7 @@ import {
   minLength,
   pipe,
   safeParse,
+  regex,
   trim,
 } from "valibot";
 
@@ -29,21 +30,15 @@ const currentPasswordSchema = object({
   ),
 });
 const passwordSchema = object({
-  currentPassword: pipe(
-    string(),
-    trim(),
-    minLength(1, "Current password is required"),
-  ),
+  currentPassword: pipe(string(), minLength(1, "Current password is required")),
   password: pipe(
     string(),
-    trim(),
-    minLength(6, "Password must be at least 6 characters"),
+    minLength(8, "Password must be at least 8 characters"),
+    regex(/[A-Z]/, "Must contain at least one uppercase letter"),
+    regex(/[0-9]/, "Must contain at least one number"),
+    regex(/[^A-Za-z0-9]/, "Must contain at least one special character"),
   ),
-  confirmPassword: pipe(
-    string(),
-    trim(),
-    minLength(6, "Confirm password is required"),
-  ),
+  confirmPassword: pipe(string(), minLength(8, "Confirm password is required")),
 });
 const Profile = () => {
   const [user, setUser] = useState(null);
@@ -84,6 +79,9 @@ const Profile = () => {
       ...formData,
       [e.target.name]: e.target.value,
     });
+    if (errors[e.target.name]) {
+      setErrors({ ...errors, [e.target.name]: null });
+    }
   };
 
   const handleProfileSubmit = async (e) => {
@@ -343,11 +341,11 @@ const Profile = () => {
                       onChange={handleChange}
                       placeholder="password"
                       disabled={!isPasswordVerified}
-                    />
+                    />{" "}
+                    {errors.password && (
+                      <small className="text-danger">{errors.password}</small>
+                    )}
                   </div>
-                  {errors.password && (
-                    <small className="text-danger">{errors.password}</small>
-                  )}
 
                   <div className="mb-4">
                     <label className="form-label text-muted small text-uppercase fw-bold">
@@ -362,12 +360,12 @@ const Profile = () => {
                       placeholder="confirmPassword"
                       disabled={!isPasswordVerified}
                     />
+                    {errors.confirmPassword && (
+                      <small className="text-danger">
+                        {errors.confirmPassword}
+                      </small>
+                    )}
                   </div>
-                  {errors.confirmPassword && (
-                    <small className="text-danger">
-                      {errors.confirmPassword}
-                    </small>
-                  )}
 
                   <button
                     type="button"

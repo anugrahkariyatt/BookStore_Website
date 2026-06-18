@@ -37,7 +37,6 @@ const CategorySlider = () => {
   }, []);
   const handleCategoryClick = async (category, index) => {
     setActiveCategory(category._id);
-    // console.log("catgory clicked", category);
 
     itemRefs.current[index]?.scrollIntoView({
       behavior: "smooth",
@@ -45,9 +44,7 @@ const CategorySlider = () => {
       inline: "center",
     });
     const res = await api.get(`/books/book-by-category/${category._id}`);
-    // console.log("cate id", category._id);
     
-    // console.log("res", res.data.books);
     setselectedBooks(res.data.books);
   };
 

@@ -1,10 +1,48 @@
 import React, { useEffect, useState } from "react";
 import api from "../../api/axios";
 import { successToast, errorToast } from "../../utils/Toast";
+import {
+  object,
+  string,
+  email,
+  minLength,
+  pipe,
+  safeParse,
+  regex,
+  trim,
+} from "valibot";
+
+const profileSchema = object({
+  name: pipe(
+    string(),
+    trim(),
+    minLength(3, "Name must be at least 3 characters"),
+  ),
+  email: pipe(string(), trim(), email("Please enter a valid email address")),
+});
+
+const currentPasswordSchema = object({
+  currentPassword: pipe(
+    string(),
+    trim(),
+    minLength(1, "Current password is required"),
+  ),
+});
+const passwordSchema = object({
+  currentPassword: pipe(string(), minLength(1, "Current password is required")),
+  password: pipe(
+    string(),
+    minLength(8, "Password must be at least 8 characters"),
+    regex(/[A-Z]/, "Must contain at least one uppercase letter"),
+    regex(/[0-9]/, "Must contain at least one number"),
+    regex(/[^A-Za-z0-9]/, "Must contain at least one special character"),
+  ),
+  confirmPassword: pipe(string(), minLength(8, "Confirm password is required")),
+});
 
 const Profile = () => {
   const [user, setUser] = useState(null);
-
+  const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -43,6 +81,23 @@ const Profile = () => {
 
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
+    const result = safeParse(profileSchema, {
+      name: formData.name,
+      email: formData.email,
+    });
+
+    if (!result.success) {
+      const fieldErrors = {};
+
+      result.issues.forEach((issue) => {
+        fieldErrors[issue.path?.[0]?.key] = issue.message;
+      });
+
+      setErrors(fieldErrors);
+      return;
+    }
+
+    setErrors({});
     try {
       await api.put("/profile/update", {
         name: formData.name,
@@ -56,9 +111,22 @@ const Profile = () => {
   };
 
   const handleVerifyPassword = async () => {
-    if (!formData.currentPassword)
-      return errorToast("Please enter current password");
+    const result = safeParse(currentPasswordSchema, {
+      currentPassword: formData.currentPassword,
+    });
 
+    if (!result.success) {
+      const fieldErrors = {};
+
+      result.issues.forEach((issue) => {
+        fieldErrors[issue.path?.[0]?.key] = issue.message;
+      });
+
+      setErrors(fieldErrors);
+      return;
+    }
+
+    setErrors({});
     setIsVerifying(true);
     try {
       await api.post("/profile/verify-password", {
@@ -74,9 +142,31 @@ const Profile = () => {
   };
 
   const handleUpdatePassword = async () => {
-    if (formData.password !== formData.confirmPassword) {
-      return errorToast("New passwords do not match");
+    const result = safeParse(passwordSchema, {
+      currentPassword: formData.currentPassword,
+      password: formData.password,
+      confirmPassword: formData.confirmPassword,
+    });
+
+    if (!result.success) {
+      const fieldErrors = {};
+
+      result.issues.forEach((issue) => {
+        fieldErrors[issue.path?.[0]?.key] = issue.message;
+      });
+
+      setErrors(fieldErrors);
+      return;
     }
+
+    if (formData.password !== formData.confirmPassword) {
+      setErrors({
+        confirmPassword: "Passwords do not match",
+      });
+      return;
+    }
+
+    setErrors({});
 
     try {
       await api.put("/profile/update-password", {
@@ -146,6 +236,9 @@ const Profile = () => {
                     value={formData.name}
                     onChange={handleChange}
                   />
+                  {errors.name && (
+                    <small className="text-danger">{errors.name}</small>
+                  )}
                 </div>
 
                 <div className="mb-4">
@@ -159,6 +252,9 @@ const Profile = () => {
                     value={formData.email}
                     onChange={handleChange}
                   />
+                  {errors.email && (
+                    <small className="text-danger">{errors.email}</small>
+                  )}
                 </div>
 
                 <button type="submit" className="btn btn-dark fw-medium">
@@ -188,6 +284,11 @@ const Profile = () => {
                     placeholder="Enter current password to unlock changes"
                     disabled={isPasswordVerified}
                   />
+                  {errors.currentPassword && (
+                    <small className="text-danger">
+                      {errors.currentPassword}
+                    </small>
+                  )}
                   <button
                     className={`btn ${isPasswordVerified ? "btn-success" : "btn-dark"}`}
                     type="button"
@@ -220,6 +321,9 @@ const Profile = () => {
                   placeholder="New password"
                   disabled={!isPasswordVerified}
                 />
+                {errors.password && (
+                  <small className="text-danger">{errors.password}</small>
+                )}
               </div>
 
               <div className="mb-4">
@@ -235,6 +339,11 @@ const Profile = () => {
                   placeholder="confirmPassword"
                   disabled={!isPasswordVerified}
                 />
+                {errors.confirmPassword && (
+                  <small className="text-danger">
+                    {errors.confirmPassword}
+                  </small>
+                )}
               </div>
 
               <button
