@@ -6,13 +6,14 @@ const HeroBanner = () => {
         <source media="(max-width: 576px)" srcSet="mobileimage.png" />
 
         {/* Tablet */}
-        <source media="(max-width: 992px)" srcSet="mobileimage.png" />
+        {/* <source media="(max-width: 720px)" srcSet="mobileimage.png" /> */}
 
         {/* Desktop */}
         <img
           src="image1.png"
           alt="Banner"
-          className="w-100 h-100 object-fit-cover"
+          className="w-100 h-100"
+          style={{ objectFit: "contain" }}
         />
       </picture>
     </div>

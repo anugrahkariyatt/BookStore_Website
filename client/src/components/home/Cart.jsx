@@ -13,7 +13,7 @@ const Cart = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { items, loading, error, isCartOpen, totalCount, totalPrice } =
-    useSelector((state) => state.cart);
+    useSelector((state) => state.cart || {});
   const { loading: orderLoading } = useSelector((state) => state.orders);
 
   const handleQuantityChange = (cartItemId, nextQuantity) => {
@@ -69,10 +69,10 @@ const Cart = () => {
       {error && <p className="text-danger mb-0">{error}</p>}
 
       <div className="d-flex flex-column gap-2">
-        {!loading && items.length === 0 ? (
+        {!loading && items?.length === 0 ? (
           <p className="mb-0">Your cart is empty.</p>
         ) : (
-          items.map((item) => (
+          items?.map((item) => (
             <div
               key={item._id}
               className="border rounded p-4 border-bottom py-3"
@@ -143,7 +143,7 @@ const Cart = () => {
         )}
       </div>
 
-      {items.length > 0 && (
+      {items?.length > 0 && (
         <div className="border-top pt-3 mt-3 d-flex justify-content-between fw-bold">
           <span>
             {totalCount} item{totalCount === 1 ? "" : "s"}
@@ -152,7 +152,7 @@ const Cart = () => {
         </div>
       )}
 
-      {items.length > 0 && (
+      {items?.length > 0 && (
         <button
           className="btn btn-dark w-100 mt-3"
           onClick={handleCheckout}

@@ -84,7 +84,14 @@ const Books = () => {
     fetchBooks();
   }, [search]);
 
-  if (!book) return <div>Loading...</div>;
+  if (!book)
+    return (
+      <div className="container py-5 text-center vh-100 d-flex justify-content-center align-items-center">
+        <div className="spinner-border text-dark" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    );
 
   return (
     //div container
@@ -139,8 +146,6 @@ const Books = () => {
             Filter
           </h3>
 
-         
-
           {/* Categories Accordion */}
           <div className="accordion-item bg-transparent border-bottom border-top-0 border-start-0 border-end-0 py-2">
             <h2 className="accordion-header" id="headingCategory">
@@ -182,7 +187,6 @@ const Books = () => {
                 ))}
               </div>
             </div>
-            
           </div>
 
           <div className="accordion-item bg-transparent border-bottom border-top-0 border-start-0 border-end-0 py-2">
@@ -226,9 +230,8 @@ const Books = () => {
                 ))}
               </div>
             </div>
-            
           </div>
- <button
+          <button
             className="btn text-white fw-medium mb-3"
             style={{ backgroundColor: "var(--primary-color)" }}
             onClick={fetchBooks}

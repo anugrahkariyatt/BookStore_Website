@@ -9,7 +9,7 @@ const BookSlider = ({ selectedBooks, title }) => {
           <p className="book-slider-text">Read What Millions Have Loved!</p>
         </div>
       </div>
-      <div className="book-slider-container no-scrollbar d-flex gap-3 overflow-auto pb-3">
+      <div className="book-slider-container no-scrollbar d-flex gap-3 overflow-auto pb-3 py-4">
         <Cards selectedBooks={selectedBooks} />
       </div>
     </div>

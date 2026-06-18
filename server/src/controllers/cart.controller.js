@@ -58,12 +58,19 @@ export const addToCart = async (req, res) => {
 export const fetchAllItemsByUserId = async (req, res) => {
   try {
     const currentUserId = req.user.userId;
+    
     const cartItems = await cartsModel
       .findOne({
         userId: currentUserId,
       })
       .populate("items.bookId");
     // console.log(">>>>", cartItems);
+    if (!cartItems) {
+      return res.status(200).json({
+        message: "successfully fetch all cart items",
+        Cart: { userId: currentUserId, items: [] } 
+      });
+    }
 
     return res.status(201).json({
       message: "successfully fetch all cart items",

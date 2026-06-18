@@ -40,7 +40,7 @@ const Homepage = () => {
         <CategorySlider />
         <BookSlider title={"Recent Released Books"} selectedBooks={newBooks} />
 
-        <AuthorsSection />
+        {/* <AuthorsSection /> */}
       </div>
     </>
   );

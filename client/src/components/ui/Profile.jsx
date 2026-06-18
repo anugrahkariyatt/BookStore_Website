@@ -2,10 +2,53 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
 import { successToast, errorToast } from "../../utils/Toast";
+import {
+  object,
+  string,
+  email,
+  minLength,
+  pipe,
+  safeParse,
+  trim,
+} from "valibot";
 
+const profileSchema = object({
+  name: pipe(
+    string(),
+    trim(),
+    minLength(3, "Name must be at least 3 characters"),
+  ),
+  email: pipe(string(), trim(), email("Please enter a valid email address")),
+});
+
+const currentPasswordSchema = object({
+  currentPassword: pipe(
+    string(),
+    trim(),
+    minLength(1, "Current password is required"),
+  ),
+});
+const passwordSchema = object({
+  currentPassword: pipe(
+    string(),
+    trim(),
+    minLength(1, "Current password is required"),
+  ),
+  password: pipe(
+    string(),
+    trim(),
+    minLength(6, "Password must be at least 6 characters"),
+  ),
+  confirmPassword: pipe(
+    string(),
+    trim(),
+    minLength(6, "Confirm password is required"),
+  ),
+});
 const Profile = () => {
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
+  const [errors, setErrors] = useState({});
 
   const [formData, setFormData] = useState({
     name: "",
@@ -45,22 +88,54 @@ const Profile = () => {
 
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
+
+    const result = safeParse(profileSchema, {
+      name: formData.name,
+      email: formData.email,
+    });
+
+    if (!result.success) {
+      const fieldErrors = {};
+
+      result.issues.forEach((issue) => {
+        fieldErrors[issue.path?.[0]?.key] = issue.message;
+      });
+
+      setErrors(fieldErrors);
+      return;
+    }
+
+    setErrors({});
+
     try {
-   
       await api.put("/profile/update", {
         name: formData.name,
         email: formData.email,
       });
+
       successToast("Profile updated successfully!");
     } catch (error) {
       errorToast("Failed to update profile");
-      console.log(error);
     }
   };
 
   const handleVerifyPassword = async () => {
-    if (!formData.currentPassword)
-      return errorToast("Please enter current password");
+    const result = safeParse(currentPasswordSchema, {
+      currentPassword: formData.currentPassword,
+    });
+
+    if (!result.success) {
+      const fieldErrors = {};
+
+      result.issues.forEach((issue) => {
+        fieldErrors[issue.path?.[0]?.key] = issue.message;
+      });
+
+      setErrors(fieldErrors);
+      return;
+    }
+
+    setErrors({});
 
     setIsVerifying(true);
     try {
@@ -79,26 +154,40 @@ const Profile = () => {
   };
 
   const handleUpdatePassword = async () => {
-    if (formData.password !== formData.confirmPassword) {
-      return errorToast("New passwords do not match");
+    const result = safeParse(passwordSchema, {
+      currentPassword: formData.currentPassword,
+      password: formData.password,
+      confirmPassword: formData.confirmPassword,
+    });
+
+    if (!result.success) {
+      const fieldErrors = {};
+
+      result.issues.forEach((issue) => {
+        fieldErrors[issue.path?.[0]?.key] = issue.message;
+      });
+
+      setErrors(fieldErrors);
+      return;
     }
 
+    if (formData.password !== formData.confirmPassword) {
+      setErrors({
+        confirmPassword: "Passwords do not match",
+      });
+      return;
+    }
+
+    setErrors({});
+
     try {
-      
       await api.put("/profile/update-password", {
         newPassword: formData.password,
       });
-      successToast("Password changed successfully!");
 
-      setFormData((prev) => ({
-        ...prev,
-        currentPassword: "",
-        password: "",
-        confirmPassword: "",
-      }));
-      setIsPasswordVerified(false);
+      successToast("Password changed successfully!");
     } catch (error) {
-      errorToast(error.response?.data?.error || "Failed to update password");
+      errorToast(error.response?.data?.error);
     }
   };
 
@@ -127,8 +216,6 @@ const Profile = () => {
               />
               <h4 className="fw-bold mb-1">{user.name}</h4>
               <p className="text-muted mb-3">{user.email}</p>
-
-              
 
               <hr className="text-muted" />
 
@@ -171,6 +258,9 @@ const Profile = () => {
                       value={formData.name}
                       onChange={handleChange}
                     />
+                    {errors.name && (
+                      <small className="text-danger">{errors.name}</small>
+                    )}
                   </div>
 
                   <div className="col-md-6">
@@ -184,6 +274,9 @@ const Profile = () => {
                       value={formData.email}
                       onChange={handleChange}
                     />
+                    {errors.email && (
+                      <small className="text-danger">{errors.email}</small>
+                    )}
                   </div>
                 </div>
 
@@ -214,7 +307,11 @@ const Profile = () => {
                     placeholder="Enter current password"
                     disabled={isPasswordVerified}
                   />
-
+                  {errors.currentPassword && (
+                    <small className="text-danger">
+                      {errors.currentPassword}
+                    </small>
+                  )}
                   <button
                     type="button"
                     className={`btn fw-bold mt-auto ${isPasswordVerified ? "btn-success" : "btn-outline-dark"}`}
@@ -244,10 +341,13 @@ const Profile = () => {
                       className="form-control form-control-lg bg-light border-0 shadow-none"
                       value={formData.password}
                       onChange={handleChange}
-                      placeholder="••••••••"
+                      placeholder="password"
                       disabled={!isPasswordVerified}
                     />
                   </div>
+                  {errors.password && (
+                    <small className="text-danger">{errors.password}</small>
+                  )}
 
                   <div className="mb-4">
                     <label className="form-label text-muted small text-uppercase fw-bold">
@@ -259,10 +359,15 @@ const Profile = () => {
                       className="form-control form-control-lg bg-light border-0 shadow-none"
                       value={formData.confirmPassword}
                       onChange={handleChange}
-                      placeholder="••••••••"
+                      placeholder="confirmPassword"
                       disabled={!isPasswordVerified}
                     />
                   </div>
+                  {errors.confirmPassword && (
+                    <small className="text-danger">
+                      {errors.confirmPassword}
+                    </small>
+                  )}
 
                   <button
                     type="button"
